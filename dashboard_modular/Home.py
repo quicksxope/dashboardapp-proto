@@ -12,20 +12,20 @@ import requests
 st.set_page_config(page_title="Dashboard Home", layout="wide")
 require_login()
 
-# URL raw file dari GitHub (ganti sesuai repo lo)
-GITHUB_PROJECT_FILE_URL = "https://raw.githubusercontent.com/quicksxope/Dashboard-New/main/data/Data_project_monitoring.xlsx"
-GITHUB_CONTRACT_FILE_URL = "https://raw.githubusercontent.com/quicksxope/Dashboard-New/main/data/data_kontrak_new.xlsx"
+from shared import get_file
 
-def get_file_hash(file):
-    return hashlib.md5(file.getvalue()).hexdigest()
+project_file = get_file(
+    "quicksxope/dashboardapp-proto/dashboard_modular/data/Data_project_monitoring.xlsx",
+    "📊 Upload Project Data",
+    "project_file"
+)
 
-@st.cache_data(ttl=3600)
-def load_excel_from_github(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        return BytesIO(response.content)
-    else:
-        return None
+contract_file = get_file(
+    "quicksxope/dashboardapp-proto/dashboard_modular/data/data_kontrak_new.xlsx",
+    "📁 Upload Contract Data",
+    "contract_file"
+)
+
 
 # --- File uploader logic ---
 uploaded_project_file = st.sidebar.file_uploader("📊 Upload Project Data", type="xlsx", key="project_file")
