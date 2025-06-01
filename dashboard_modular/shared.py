@@ -59,17 +59,23 @@ def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboar
 
 
 def get_file(repo_path: str, label: str, key: str, branch="main"):
+    # Pisahkan ke REPO dan FILE_PATH
+    if "/contents/" not in repo_path:
+        st.error("❌ repo_path harus dalam format '<repo>/contents/<path>'")
+        return None
+
+    repo, file_path = repo_path.split("/contents/", 1)
+
     uploaded = st.sidebar.file_uploader(label, type="xlsx", key=key)
-    github_file, github_hash, github_sha = get_github_file_and_hash(repo_path, branch=branch)
+    github_file, github_hash, github_sha = get_github_file_and_hash(f"{repo}/contents/{file_path}", branch=branch)
 
     if uploaded:
         file_bytes = uploaded.getvalue()
         uploaded_hash = get_file_hash(file_bytes)
 
         if uploaded_hash == github_hash:
-            st.sidebar.info("✅ Uploaded file sama persis dengan GitHub. Pakai default.")
+            st.sidebar.info("✅ Uploaded file sama dengan GitHub. Pakai default.")
             return github_file
-
         else:
             with st.sidebar.expander("⚠️ Konfirmasi Penggantian File"):
                 st.warning("File yang diupload berbeda dari GitHub.")
@@ -80,27 +86,26 @@ def get_file(repo_path: str, label: str, key: str, branch="main"):
                 )
 
             if confirm == "Ya":
-                st.sidebar.warning("🆕 Mengunggah ke GitHub…")
+                st.sidebar.warning("📤 Mengunggah ke GitHub...")
                 success = update_file_to_github(
-                    repo_path,
+                    f"{repo}/contents/{file_path}",
                     file_bytes,
-                    f"Auto-update {key} from dashboard",
+                    f"Update {key} from dashboard",
                     branch=branch,
                     sha=github_sha
                 )
                 if success:
                     timestamp = datetime.now()
                     st.session_state[f"{key}_uploaded_at"] = timestamp
-                    st.sidebar.success("📤 File berhasil diunggah ke GitHub.")
+                    st.sidebar.success("✅ File berhasil diunggah ke GitHub.")
                     st.sidebar.markdown(f"🕒 Uploaded at: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
                     return BytesIO(file_bytes)
                 else:
-                    st.sidebar.error("❌ Gagal upload ke GitHub. Pakai file default.")
+                    st.sidebar.error("❌ Gagal upload ke GitHub. Gunakan file default.")
                     return github_file
             else:
                 st.sidebar.info("📥 Upload dibatalkan. Menggunakan file GitHub.")
                 return github_file
-
     else:
         st.sidebar.info("📥 Tidak ada file diupload. Menggunakan file GitHub.")
         return github_file
