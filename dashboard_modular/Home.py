@@ -15,16 +15,18 @@ require_login()
 from shared import get_file
 
 project_file = get_file(
-    "quicksxope/dashboardapp-proto/dashboard_modular/data/Data_project_monitoring.xlsx",
+    "quicksxope/dashboardapp-proto/contents/data/Data_project_monitoring.xlsx",
     "📊 Upload Project Data",
     "project_file"
 )
 
+
 contract_file = get_file(
-    "quicksxope/dashboardapp-proto/dashboard_modular/data/data_kontrak_new.xlsx",
+    "quicksxope/dashboardapp-proto/contents/data/data_kontrak_new.xlsx",
     "📁 Upload Contract Data",
     "contract_file"
 )
+
 
 
 # --- File uploader logic ---
