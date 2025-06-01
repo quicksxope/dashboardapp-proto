@@ -508,35 +508,11 @@ def main():
         </head>
     """, unsafe_allow_html=True)
     
-    def get_file_hash(file):
-        return hashlib.md5(file.getvalue()).hexdigest()
-
-    @st.cache_data(ttl=3600)
-    def load_excel_from_github(url):
-        response = requests.get(url)
-        if response.status_code == 200:
-            return BytesIO(response.content)
-        else:
-            return None
-
-    GITHUB_PROJECT_FILE_URL = "https://raw.githubusercontent.com/quicksxope/Dashboard-New/main/data/Data_project_monitoring.xlsx"
-
-    uploaded_project_file = st.sidebar.file_uploader("📊 Upload Project Data", type="xlsx", key="project_file")
-
-    if uploaded_project_file:
-        file_hash = get_file_hash(uploaded_project_file)
-        if st.session_state.get("project_file_hash") != file_hash:
-            st.session_state.project_file_hash = file_hash
-            st.session_state.project_upload_time = datetime.now()
-        project_file = BytesIO(uploaded_project_file.getvalue())
-        st.sidebar.markdown(f"🕒 Last Project Upload: {st.session_state.project_upload_time.strftime('%Y-%m-%d %H:%M:%S')}")
-    else:
-        project_file = load_excel_from_github(GITHUB_PROJECT_FILE_URL)
-        st.sidebar.info("📥 Using default project file from GitHub")
-
-    if not project_file:
-        st.warning("⚠️ No project file available. Please upload or check GitHub URL.")
-        return
+    project_file = get_file(
+    "quicksxope/Dashboard-New/contents/data/Data_project_monitoring.xlsx",
+    "📊 Upload Project Data",
+    key="project_file"
+)
 
     original_df = load_data(project_file)
     df = original_df.copy()
