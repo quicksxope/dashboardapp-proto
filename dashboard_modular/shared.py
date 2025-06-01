@@ -49,7 +49,14 @@ def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboar
         payload["sha"] = sha
 
     res = requests.put(url, headers=GITHUB_HEADERS, json=payload)
+
+    # DEBUG
+    if res.status_code not in (200, 201):
+        st.error(f"GitHub response: {res.status_code}")
+        st.code(res.text)
+
     return res.status_code in (200, 201)
+
 
 def get_file(repo_path: str, label: str, key: str, branch="main"):
     uploaded = st.sidebar.file_uploader(label, type="xlsx", key=key)
