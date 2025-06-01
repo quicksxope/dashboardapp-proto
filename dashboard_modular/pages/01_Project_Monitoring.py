@@ -1735,11 +1735,51 @@ function hideInfo() {
 
             with col2:
                 st.markdown("### 📘 Abbreviation Legend")
+            
                 legend_table = pd.DataFrame({
                     'Abbrev': sub_area_df['Abbrev'],
                     'Full Name': sub_area_df['Sub Area']
                 }).sort_values('Abbrev')
-                st.dataframe(legend_table, use_container_width=True, hide_index=True)
+            
+                legend_html_rows = ""
+                for i, row in legend_table.iterrows():
+                    abbrev = row['Abbrev']
+                    full_name = row['Full Name']
+                    legend_html_rows += f"""
+                    <tr>
+                        <td>{abbrev}</td>
+                        <td>{full_name}</td>
+                        <td><button onclick="triggerBubble('{abbrev}')" style="padding:4px 10px; font-size:12px;">🔍 Lihat</button></td>
+                    </tr>
+                    """
+            
+                legend_html = f"""
+                <table style="width:100%; font-size:13px; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding:4px;">Abbrev</th>
+                            <th style="text-align:left; padding:4px;">Full Name</th>
+                            <th style="text-align:left; padding:4px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {legend_html_rows}
+                    </tbody>
+                </table>
+            
+                <script>
+                function triggerBubble(abbrev) {{
+                  d3.selectAll("g").each(function(d) {{
+                    if (d.Abbrev === abbrev) {{
+                      this.dispatchEvent(new Event('click'));
+                    }}
+                  }});
+                }}
+                </script>
+                """
+            
+                st.markdown(legend_html, unsafe_allow_html=True)
+
             
 
         except Exception as e:
