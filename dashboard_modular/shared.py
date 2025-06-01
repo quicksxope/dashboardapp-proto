@@ -110,6 +110,7 @@ def get_file(repo_path: str, label: str, key: str, branch="main"):
 
                 
                 if success:
+                    st.cache_data.clear()
                     timestamp = datetime.now()
                     st.session_state[f"{key}_uploaded_at"] = timestamp
                     st.sidebar.success("✅ File berhasil diunggah ke GitHub.")
