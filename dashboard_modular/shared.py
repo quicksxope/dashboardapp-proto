@@ -102,11 +102,12 @@ def get_file(repo_path: str, label: str, key: str, branch="main"):
             if confirm == "Ya":
                 st.sidebar.warning("📤 Mengunggah ke GitHub...")
                 success = update_file_to_github(
-                    f"{repo}/contents/{file_path}",
-                    file_bytes,
-                    f"Update {key} from dashboard",
-                    branch=branch,
-                    sha=github_sha
+                f"{repo}/contents/{file_path}",
+                file_bytes,
+                f"Update {key} from dashboard",
+                branch=branch
+            )
+
                 )
                 if success:
                     timestamp = datetime.now()
