@@ -40,6 +40,12 @@ def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboar
     url = f"https://api.github.com/repos/{repo_path}"
     content_b64 = base64.b64encode(file_bytes).decode()
 
+    # ✅ Fetch SHA again to avoid mismatch
+    if not sha:
+        res_get = requests.get(url + f"?ref={branch}", headers=GITHUB_HEADERS)
+        if res_get.status_code == 200:
+            sha = res_get.json().get("sha")
+
     payload = {
         "message": commit_msg,
         "content": content_b64,
@@ -50,12 +56,12 @@ def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboar
 
     res = requests.put(url, headers=GITHUB_HEADERS, json=payload)
 
-    # DEBUG
     if res.status_code not in (200, 201):
-        st.error(f"GitHub response: {res.status_code}")
+        st.error(f"❌ GitHub PUT error {res.status_code}")
         st.code(res.text)
 
     return res.status_code in (200, 201)
+
 
 
 def get_file(repo_path: str, label: str, key: str, branch="main"):
