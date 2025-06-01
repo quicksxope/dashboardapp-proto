@@ -1747,19 +1747,38 @@ function hideInfo() {
                     full_name = row['Full Name']
                     legend_html_rows += f"""
                     <tr>
-                        <td>{abbrev}</td>
-                        <td>{full_name}</td>
-                        <td><button onclick="triggerBubble('{abbrev}')" style="padding:4px 10px; font-size:12px;">🔍 Lihat</button></td>
+                        <td style="padding:4px; border:1px solid #ccc;">{abbrev}</td>
+                        <td style="padding:4px; border:1px solid #ccc;">{full_name}</td>
+                        <td style="padding:4px; border:1px solid #ccc;">
+                            <button onclick="triggerBubble('{abbrev}')" 
+                                    style="padding:4px 10px; font-size:12px; cursor:pointer;">
+                                🔍 Lihat
+                            </button>
+                        </td>
                     </tr>
                     """
             
                 legend_html = f"""
-                <table style="width:100%; font-size:13px; border-collapse: collapse;">
+                <style>
+                    table.zone-legend {{
+                        border-collapse: collapse;
+                        width: 100%;
+                        font-size: 13px;
+                    }}
+                    table.zone-legend th {{
+                        background: #f3f4f6;
+                        text-align: left;
+                        padding: 6px;
+                        border: 1px solid #ccc;
+                    }}
+                </style>
+            
+                <table class="zone-legend">
                     <thead>
                         <tr>
-                            <th style="text-align:left; padding:4px;">Abbrev</th>
-                            <th style="text-align:left; padding:4px;">Full Name</th>
-                            <th style="text-align:left; padding:4px;">Action</th>
+                            <th>Abbrev</th>
+                            <th>Full Name</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1779,6 +1798,7 @@ function hideInfo() {
                 """
             
                 st.markdown(legend_html, unsafe_allow_html=True)
+            
 
             
 
