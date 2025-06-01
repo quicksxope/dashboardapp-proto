@@ -28,49 +28,6 @@ contract_file = get_file(
 )
 
 
-
-# --- File uploader logic ---
-uploaded_project_file = st.sidebar.file_uploader("📊 Upload Project Data", type="xlsx", key="project_file")
-uploaded_contract_file = st.sidebar.file_uploader("📁 Upload Contract Data", type="xlsx", key="contract_file")
-
-# --- Project file ---
-if uploaded_project_file:
-    file_hash = get_file_hash(uploaded_project_file)
-    if st.session_state.get("project_file_hash") != file_hash:
-        st.session_state.project_file_hash = file_hash
-        st.session_state.project_upload_time = datetime.now()
-    project_file = BytesIO(uploaded_project_file.getvalue())
-    st.sidebar.markdown(f"🕒 Last Project Upload: {st.session_state.project_upload_time.strftime('%Y-%m-%d %H:%M:%S')}")
-else:
-    project_file = load_excel_from_github(GITHUB_PROJECT_FILE_URL)
-    st.sidebar.info("📥 Using default project file from GitHub")
-
-# --- Contract file ---
-if uploaded_contract_file:
-    file_hash = get_file_hash(uploaded_contract_file)
-    if st.session_state.get("contract_file_hash") != file_hash:
-        st.session_state.contract_file_hash = file_hash
-        st.session_state.contract_upload_time = datetime.now()
-    contract_file = BytesIO(uploaded_contract_file.getvalue())
-    st.sidebar.markdown(f"🕒 Last Contract Upload: {st.session_state.contract_upload_time.strftime('%Y-%m-%d %H:%M:%S')}")
-else:
-    contract_file = load_excel_from_github(GITHUB_CONTRACT_FILE_URL)
-    st.sidebar.info("📥 Using default contract file from GitHub")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 st.markdown("""
 <div style="
     background: linear-gradient(to right, #3498db, #2ecc71);
