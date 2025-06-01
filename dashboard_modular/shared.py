@@ -73,15 +73,21 @@ def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboar
 
 
 def get_file(repo_path: str, label: str, key: str, branch="main"):
-    # Pisahkan ke REPO dan FILE_PATH
+    # Validasi path format
     if "/contents/" not in repo_path:
         st.error("❌ repo_path harus dalam format '<repo>/contents/<path>'")
         return None
 
+    # Pisahkan repo & file path
     repo, file_path = repo_path.split("/contents/", 1)
 
+    # Upload dari user
     uploaded = st.sidebar.file_uploader(label, type="xlsx", key=key)
-    github_file, github_hash, github_sha = get_github_file_and_hash(f"{repo}/contents/{file_path}", branch=branch)
+
+    # Ambil file dan hash dari GitHub
+    github_file, github_hash, github_sha = get_github_file_and_hash(
+        f"{repo}/contents/{file_path}", branch=branch
+    )
 
     if uploaded:
         file_bytes = uploaded.getvalue()
@@ -90,39 +96,41 @@ def get_file(repo_path: str, label: str, key: str, branch="main"):
         if uploaded_hash == github_hash:
             st.sidebar.info("✅ Uploaded file sama dengan GitHub. Pakai default.")
             return github_file
-        else:
-            with st.sidebar.expander("⚠️ Konfirmasi Penggantian File"):
-                st.warning("File yang diupload berbeda dari GitHub.")
-                confirm = st.radio(
-                    "Yakin ingin mengganti file default dengan yang ini?",
-                    ["Tidak", "Ya"],
-                    key=f"{key}_confirm"
-                )
 
-            if confirm == "Ya":
-                st.sidebar.warning("📤 Mengunggah ke GitHub...")
-                success = update_file_to_github(
+        # Konfirmasi sebelum mengganti file GitHub
+        with st.sidebar.expander("⚠️ Konfirmasi Penggantian File"):
+            st.warning("File yang diupload berbeda dari GitHub.")
+            confirm = st.radio(
+                "Yakin ingin mengganti file default dengan yang ini?",
+                ["Tidak", "Ya"],
+                key=f"{key}_confirm"
+            )
+
+        if confirm == "Ya":
+            st.sidebar.warning("📤 Mengunggah ke GitHub...")
+            success = update_file_to_github(
                 f"{repo}/contents/{file_path}",
                 file_bytes,
                 f"Update {key} from dashboard",
                 branch=branch
-                )
+            )
 
-                
-                if success:
-                    st.cache_data.clear()
-                    timestamp = datetime.now()
-                    st.session_state[f"{key}_uploaded_at"] = timestamp
-                    st.sidebar.success("✅ File berhasil diunggah ke GitHub.")
-                    st.sidebar.markdown(f"🕒 Uploaded at: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
-                    return BytesIO(file_bytes)
-                else:
-                    st.sidebar.error("❌ Gagal upload ke GitHub. Gunakan file default.")
-                    return github_file
+            if success:
+                st.cache_data.clear()  # ❗ Clear cache biar next fetch ambil versi baru
+                timestamp = datetime.now()
+                st.session_state[f"{key}_uploaded_at"] = timestamp
+                st.sidebar.success("✅ File berhasil diunggah ke GitHub.")
+                st.sidebar.markdown(f"🕒 Uploaded at: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
+                return BytesIO(file_bytes)
             else:
-                st.sidebar.info("📥 Upload dibatalkan. Menggunakan file GitHub.")
+                st.sidebar.error("❌ Gagal upload ke GitHub. Gunakan file default.")
                 return github_file
+        else:
+            st.sidebar.info("📥 Upload dibatalkan. Menggunakan file GitHub.")
+            return github_file
+
     else:
         st.sidebar.info("📥 Tidak ada file diupload. Menggunakan file GitHub.")
         return github_file
+
 
