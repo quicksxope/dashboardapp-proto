@@ -13,6 +13,16 @@ import hashlib
 from datetime import datetime
 import requests
 
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from shared import get_file
+
+
+
+
 def clean_text(x):
     if pd.isna(x):
         return ''
