@@ -36,31 +36,39 @@ def get_github_file_and_hash(repo_path, branch="main"):
     
     return None, None, None
 
-def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboard", branch="main", sha=None):
-    url = f"https://api.github.com/repos/{repo_path}"
+def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboard", branch="main"):
+    """Update file di GitHub dengan SHA yang selalu fresh."""
+    # Pisah repo & file path
+    repo, file_path = repo_path.split("/contents/", 1)
+
+    # 🔁 Step 1: GET SHA terbaru langsung dari GitHub
+    get_url = f"https://api.github.com/repos/{repo}/contents/{file_path}?ref={branch}"
+    res_get = requests.get(get_url, headers=GITHUB_HEADERS)
+
+    if res_get.status_code != 200:
+        st.error(f"❌ Gagal ambil SHA untuk {file_path}")
+        st.code(res_get.text)
+        return False
+
+    sha = res_get.json().get("sha")
+
+    # 🔁 Step 2: Prepare PUT payload
     content_b64 = base64.b64encode(file_bytes).decode()
-
-    # ✅ Fetch SHA again to avoid mismatch
-    if not sha:
-        res_get = requests.get(url + f"?ref={branch}", headers=GITHUB_HEADERS)
-        if res_get.status_code == 200:
-            sha = res_get.json().get("sha")
-
+    put_url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
     payload = {
         "message": commit_msg,
         "content": content_b64,
         "branch": branch,
+        "sha": sha
     }
-    if sha:
-        payload["sha"] = sha
 
-    res = requests.put(url, headers=GITHUB_HEADERS, json=payload)
+    res_put = requests.put(put_url, headers=GITHUB_HEADERS, json=payload)
 
-    if res.status_code not in (200, 201):
-        st.error(f"❌ GitHub PUT error {res.status_code}")
-        st.code(res.text)
+    if res_put.status_code not in (200, 201):
+        st.error(f"❌ GitHub PUT error {res_put.status_code}")
+        st.code(res_put.text)
 
-    return res.status_code in (200, 201)
+    return res_put.status_code in (200, 201)
 
 
 
