@@ -59,17 +59,25 @@ def section_card(title=None):
         """, unsafe_allow_html=True)
     return section
 
-# --- Metric Card ---
 def metric_card(title, value, sub, icon="✅", bg="#6C5CE7"):
     gradient = f"linear-gradient(135deg, {bg}, #00CEC9)"
     return f"""
-    <div class=\"metric-card\" style=\"padding:1.2rem; background:{gradient}; border-radius:1.5rem; box-shadow:0 4px 12px rgba(0, 0, 0, 0.2); text-align:center; height:100%;\">
+    <div class=\"metric-card\" style=\"
+        padding: 1.2rem;
+        background: {gradient};
+        border-radius: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        height: 100%;
+        margin-bottom: 1.5rem;   /* ✅ Tambahkan ini */
+    \">
         <div style=\"font-size:1.8rem;\">{icon}</div>
         <div style=\"font-size:1.1rem; font-weight:600; color:white;\">{title}</div>
         <div style=\"font-size:2rem; font-weight:700; color:white;\">{value}</div>
         <div style=\"color:#DADDE1; font-size:0.85rem;\">{sub}</div>
     </div>
     """
+
 
 # --- Chart Utils ---
 def get_color(pct): return '#2ECC71' if pct >= 50 else '#E74C3C'
