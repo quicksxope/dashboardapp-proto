@@ -4,20 +4,22 @@ import requests
 from io import BytesIO
 import streamlit as st
 import base64
+from datetime import datetime
 
-# --- Global GitHub Token Header ---
+# --- Token GitHub dari secrets ---
 GITHUB_HEADERS = {
     "Authorization": f"token {st.secrets['github_token']}",
     "Accept": "application/vnd.github.v3+json"
 }
 
 def get_file_hash(file_bytes):
-    """Return MD5 hash of given file content."""
     return hashlib.md5(file_bytes).hexdigest()
 
 @st.cache_data(ttl=3600)
 def get_github_file_and_hash(repo_path, branch="main"):
-    """Download file from GitHub and return its content, hash, and SHA."""
+    """
+    Ambil file dari GitHub dan return (BytesIO, hash, sha)
+    """
     url = f"https://api.github.com/repos/{repo_path}?ref={branch}"
     res = requests.get(url, headers=GITHUB_HEADERS)
 
@@ -28,14 +30,13 @@ def get_github_file_and_hash(repo_path, branch="main"):
             content = base64.b64decode(content_b64)
             return BytesIO(content), hashlib.md5(content).hexdigest(), json_data["sha"]
         except Exception as e:
-            st.error(f"⚠️ Failed to parse GitHub content: {e}")
-            return None, None, None
+            st.error(f"⚠️ Gagal parsing file dari GitHub: {e}")
     else:
-        st.error(f"⚠️ Failed to fetch file from GitHub: {res.status_code}")
-        return None, None, None
+        st.error(f"⚠️ Gagal ambil file dari GitHub ({repo_path}): {res.status_code}")
+    
+    return None, None, None
 
 def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboard", branch="main", sha=None):
-    """Upload or replace file on GitHub repo."""
     url = f"https://api.github.com/repos/{repo_path}"
     content_b64 = base64.b64encode(file_bytes).decode()
 
@@ -44,7 +45,6 @@ def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboar
         "content": content_b64,
         "branch": branch,
     }
-
     if sha:
         payload["sha"] = sha
 
@@ -53,10 +53,11 @@ def update_file_to_github(repo_path, file_bytes, commit_msg="Update via dashboar
 
 def get_file(repo_path: str, label: str, key: str, branch="main"):
     """
-    Handle file upload + GitHub fallback + auto-replace if changed.
-    - `repo_path`: "username/repo/contents/path/to/file.xlsx"
-    - `label`: file uploader label
-    - `key`: session key for uploader
+    Ambil file dari uploader atau GitHub:
+    - Kalau user upload → simpan & update ke GitHub jika beda
+    - Kalau sama → pakai file GitHub
+    - Kalau tidak upload → fallback GitHub
+    Return: BytesIO file
     """
     uploaded = st.sidebar.file_uploader(label, type="xlsx", key=key)
     github_file, github_hash, github_sha = get_github_file_and_hash(repo_path, branch=branch)
@@ -66,22 +67,26 @@ def get_file(repo_path: str, label: str, key: str, branch="main"):
         uploaded_hash = get_file_hash(file_bytes)
 
         if uploaded_hash == github_hash:
-            st.sidebar.info(f"✅ Uploaded file same as GitHub. Using default.")
+            st.sidebar.info("✅ Uploaded file sama persis dengan GitHub. Pakai default.")
             return github_file
         else:
-            st.sidebar.warning("🆕 Uploaded file is different. Updating GitHub…")
+            st.sidebar.warning("🆕 File berbeda. Mengunggah ke GitHub...")
             success = update_file_to_github(
                 repo_path,
                 file_bytes,
-                f"Update {key} from dashboard upload",
+                f"Auto-update {key} from dashboard",
                 branch=branch,
                 sha=github_sha
             )
             if success:
-                st.sidebar.success("📤 File updated to GitHub.")
+                timestamp = datetime.now()
+                st.session_state[f"{key}_uploaded_at"] = timestamp
+                st.sidebar.success("📤 File berhasil diunggah ke GitHub.")
+                st.sidebar.markdown(f"🕒 Uploaded at: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
                 return BytesIO(file_bytes)
             else:
-                st.sidebar.error("❌ Failed to update file. Using GitHub version instead.")
+                st.sidebar.error("❌ Gagal upload ke GitHub. Pakai default.")
                 return github_file
     else:
+        st.sidebar.info("📥 Menggunakan file default dari GitHub.")
         return github_file
