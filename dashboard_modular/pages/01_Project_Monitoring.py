@@ -1718,6 +1718,51 @@ function hideInfo() {
   }
 }
 </script>
+legend_html_rows = ""
+for _, row in sub_area_df.iterrows():
+    abbrev = row['Abbrev']
+    full_name = row['Sub Area']
+    legend_html_rows += f"""
+    <tr>
+        <td style='border:1px solid #ccc; padding:4px;'>{abbrev}</td>
+        <td style='border:1px solid #ccc; padding:4px;'>{full_name}</td>
+        <td style='border:1px solid #ccc; padding:4px;'>
+            <button onclick="triggerBubble('{abbrev}')" style='font-size:12px; padding:2px 8px;'>🔍</button>
+        </td>
+    </tr>
+    """
+
+legend_block = f"""
+<!-- Legend Table (Click to Focus Bubble) -->
+<div style="position:absolute; top:30px; right:30px; background:#fff; border:1px solid #ccc; padding:10px; font-size:13px; max-height:80%; overflow:auto; box-shadow:0 2px 6px rgba(0,0,0,0.1); z-index:999;">
+  <h4 style="margin-top:0;">📘 Legend</h4>
+  <table style="border-collapse:collapse; font-size:13px;">
+    <thead>
+      <tr>
+        <th style="border:1px solid #ccc; padding:4px;">Abbrev</th>
+        <th style="border:1px solid #ccc; padding:4px;">Name</th>
+        <th style="border:1px solid #ccc; padding:4px;">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {legend_html_rows}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function triggerBubble(abbrev) {{
+    d3.selectAll("g").each(function(d) {{
+      if (d.Abbrev === abbrev) {{
+        this.dispatchEvent(new Event('click'));
+      }}
+    }});
+  }}
+</script>
+"""
+
+html_code = html_code.replace('</body></html>', legend_block + '</body></html>')
+
 </body>
 </html>
 '''
@@ -1727,78 +1772,13 @@ function hideInfo() {
 
 
 
-            col1, col2 = st.columns([3, 1])
-
+            col1, _ = st.columns([1, 0])  # remove col2
             with col1:
-                components.html(html_code, height=720)
-                st.caption("🧲 Force-directed bubble map – no overlaps guaranteed")
+                components.html(html_code, height=800)
+                st.caption("🧲 Force-directed bubble map + interactive legend")
 
-            with col2:
-                st.markdown("### 📘 Abbreviation Legend")
-            
-                legend_table = pd.DataFrame({
-                    'Abbrev': sub_area_df['Abbrev'],
-                    'Full Name': sub_area_df['Sub Area']
-                }).sort_values('Abbrev')
-            
-                legend_html_rows = ""
-                for i, row in legend_table.iterrows():
-                    abbrev = row['Abbrev']
-                    full_name = row['Full Name']
-                    legend_html_rows += f"""
-                    <tr>
-                        <td style="padding:4px; border:1px solid #ccc;">{abbrev}</td>
-                        <td style="padding:4px; border:1px solid #ccc;">{full_name}</td>
-                        <td style="padding:4px; border:1px solid #ccc;">
-                            <button onclick="triggerBubble('{abbrev}')"
-                                    style="padding:4px 10px; font-size:12px; cursor:pointer;">
-                                🔍 Lihat
-                            </button>
-                        </td>
-                    </tr>
-                    """
-            
-                legend_html = f"""
-                <style>
-                    table.zone-legend {{
-                        border-collapse: collapse;
-                        width: 100%;
-                        font-size: 13px;
-                    }}
-                    table.zone-legend th {{
-                        background: #f3f4f6;
-                        text-align: left;
-                        padding: 6px;
-                        border: 1px solid #ccc;
-                    }}
-                </style>
-            
-                <table class="zone-legend">
-                    <thead>
-                        <tr>
-                            <th>Abbrev</th>
-                            <th>Full Name</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {legend_html_rows}
-                    </tbody>
-                </table>
-            
-                <script>
-                function triggerBubble(abbrev) {{
-                  d3.selectAll("g").each(function(d) {{
-                    if (d.Abbrev === abbrev) {{
-                      this.dispatchEvent(new Event('click'));
-                    }}
-                  }});
-                }}
-                </script>
-                """
-            
-                st.markdown(legend_html, unsafe_allow_html=True)
 
+            
             
 
             
