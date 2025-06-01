@@ -1750,7 +1750,7 @@ function hideInfo() {
                         <td style="padding:4px; border:1px solid #ccc;">{abbrev}</td>
                         <td style="padding:4px; border:1px solid #ccc;">{full_name}</td>
                         <td style="padding:4px; border:1px solid #ccc;">
-                            <button onclick="triggerBubble('{abbrev}')" 
+                            <button onclick="triggerBubble('{abbrev}')"
                                     style="padding:4px 10px; font-size:12px; cursor:pointer;">
                                 🔍 Lihat
                             </button>
@@ -1798,6 +1798,7 @@ function hideInfo() {
                 """
             
                 st.markdown(legend_html, unsafe_allow_html=True)
+
             
 
             
