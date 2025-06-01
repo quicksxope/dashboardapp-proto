@@ -21,7 +21,7 @@ contract_file = get_file(
 financial_file = get_file(
     "quicksxope/dashboardapp-proto/contents/data/financial_progress.xlsx",
     "📁 Upload Contract Data",
-    "financial_progress"
+    "financial_file"
 )
 
 
