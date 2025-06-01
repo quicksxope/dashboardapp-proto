@@ -6,7 +6,11 @@ from io import BytesIO
 import hashlib
 from datetime import datetime
 import requests
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from shared import get_file
 # --- Config & Auth ---
 st.set_page_config(page_title="📁 Contract Summary Dashboard", layout="wide")
 from auth import require_login
