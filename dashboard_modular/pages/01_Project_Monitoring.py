@@ -1772,7 +1772,8 @@ html_code = html_code.replace('</body></html>', legend_block + '</body></html>')
 
 
 
-            col1, _ = st.columns([1, 0])  # remove col2
+            col1 = st.container()
+
             with col1:
                 components.html(html_code, height=800)
                 st.caption("🧲 Force-directed bubble map + interactive legend")
