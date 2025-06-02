@@ -1721,6 +1721,41 @@ function focusBubble(abbrev) {
   `);
   d3.select("#info-panel").style("display", "block");
 }
+// --- ADD THIS: Listen to messages from Streamlit legend table ---
+window.addEventListener("message", function(event) {
+  const abbrev = event.data;
+  const target = data.find(d => d.Abbrev === abbrev);
+  if (!target) return;
+
+  const i = data.indexOf(target);
+  const targetNode = node._groups[0][i];
+  target.fx = target.x;
+  target.fy = target.y;
+
+  if (selectedNode && selectedNode !== target) {
+    selectedNode.fx = null;
+    selectedNode.fy = null;
+    d3.select(selectedNodeElem).select("circle")
+      .transition().duration(300)
+      .attr("r", originalRadius);
+  }
+
+  selectedNode = target;
+  selectedNodeElem = targetNode;
+  originalRadius = target.Size;
+
+  d3.select(targetNode).select("circle")
+    .transition().duration(300)
+    .attr("r", target.Size * 1.2);
+
+  d3.select("#info-title").text(target.SubArea);
+  d3.select("#info-body").html(`
+    <strong>Progress:</strong> ${target.Progress.toFixed(1)}%<br/>
+    <strong>Status:</strong> ${target.Status}
+  `);
+  d3.select("#info-panel").style("display", "block");
+});
+
 </script>
 </body>
 </html>
@@ -1748,28 +1783,43 @@ function focusBubble(abbrev) {
             with col2:
                 st.markdown("### 📘 Abbreviation Legend")
             
-                legend_html = """
-                <style>
-                  .legend-row {
-                    cursor: pointer;
-                  }
-                  .legend-row:hover {
-                    background-color: #f0f0f0;
-                  }
-                </style>
-                <table style='width: 100%; font-size: 13px; font-family: Arial, sans-serif; border-collapse: collapse;'>
-                  <thead>
-                    <tr><th style='text-align:left;'>Abbrev</th><th style='text-align:left;'>Full Name</th></tr>
-                  </thead>
-                  <tbody>
-                """
-                for _, row in legend_table.iterrows():
-                    legend_html += f"<tr class='legend-row' onclick='focusBubble(\"{row['Abbrev']}\")'><td>{row['Abbrev']}</td><td>{row['Full Name']}</td></tr>"
-                legend_html += "</tbody></table>"
+                legend_table = pd.DataFrame({
+                    'Abbrev': sub_area_df['Abbrev'],
+                    'Full Name': sub_area_df['Sub Area']
+                }).sort_values('Abbrev')
             
-                st.components.v1.html(legend_html + "<script></script>", height=420, scrolling=True)
-
-
+                # Convert legend_table to HTML with onclick events
+                html_rows = ""
+                for _, row in legend_table.iterrows():
+                    abbrev = row['Abbrev']
+                    full_name = row['Full Name']
+                    html_rows += f"""
+                    <tr onclick="window.parent.postMessage('{abbrev}', '*')" style='cursor:pointer;'>
+                        <td style='padding: 6px 12px; border-bottom: 1px solid #eee;'>{abbrev}</td>
+                        <td style='padding: 6px 12px; border-bottom: 1px solid #eee;'>{full_name}</td>
+                    </tr>
+                    """
+            
+                html_table = f"""
+                <div style="max-height:500px; overflow-y:auto; font-family:Arial, sans-serif; font-size:13px;">
+                <table style="border-collapse: collapse; width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style='text-align:left; padding: 8px; border-bottom: 2px solid #ccc;'>Abbrev</th>
+                            <th style='text-align:left; padding: 8px; border-bottom: 2px solid #ccc;'>Full Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {html_rows}
+                    </tbody>
+                </table>
+                </div>
+                """
+            
+                st.markdown(html_table, unsafe_allow_html=True)
+            
+            
+            
 
 
             
