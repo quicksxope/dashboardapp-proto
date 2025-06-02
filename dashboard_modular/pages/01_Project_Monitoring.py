@@ -1729,6 +1729,10 @@ function focusBubble(abbrev) {
 
 
 
+            legend_table = pd.DataFrame({
+                'Abbrev': sub_area_df['Abbrev'],
+                'Full Name': sub_area_df['Sub Area']
+            }).sort_values('Abbrev')
 
             with col2:
                 st.markdown("### 📘 Abbreviation Legend")
