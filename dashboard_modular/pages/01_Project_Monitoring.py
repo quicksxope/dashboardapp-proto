@@ -1594,25 +1594,16 @@ const data = ''' + str(bubbles_json) + ''';
 const width = 1200;
 const height = 900;
 
-// Define gradients for each bubble
+// Define gradients
 const defs = svgElem.append("defs");
-
 data.forEach((d, i) => {
   const grad = defs.append("radialGradient")
     .attr("id", "grad" + i)
     .attr("cx", "50%")
     .attr("cy", "50%")
     .attr("r", "50%");
-
-  grad.append("stop")
-    .attr("offset", "0%")
-    .attr("stop-color", d.Color)
-    .attr("stop-opacity", 0.3);
-
-  grad.append("stop")
-    .attr("offset", "100%")
-    .attr("stop-color", d.Color)
-    .attr("stop-opacity", 1);
+  grad.append("stop").attr("offset", "0%").attr("stop-color", d.Color).attr("stop-opacity", 0.3);
+  grad.append("stop").attr("offset", "100%").attr("stop-color", d.Color).attr("stop-opacity", 1);
 });
 
 // Simulation
@@ -1643,35 +1634,7 @@ const node = zoomLayer.selectAll("g")
   .enter().append("g")
   .style("cursor", "pointer")
   .on("click", function(event, d) {
-    if (selectedNode === d) {
-      hideInfo();
-      return;
-    }
-
-    if (selectedNode) {
-      selectedNode.fx = null;
-      selectedNode.fy = null;
-      d3.select(selectedNodeElem).select("circle")
-        .transition().duration(300)
-        .attr("r", originalRadius);
-    }
-
-    selectedNode = d;
-    selectedNodeElem = this;
-    originalRadius = d.Size;
-
-    d.fx = d.x;
-    d.fy = d.y;
-    d3.select(this).select("circle")
-      .transition().duration(300)
-      .attr("r", d.Size * 1.2);
-
-    d3.select("#info-title").text(d.SubArea);
-    d3.select("#info-body").html(`
-      <strong>Progress:</strong> ${d.Progress.toFixed(1)}%<br/>
-      <strong>Status:</strong> ${d.Status}
-    `);
-    d3.select("#info-panel").style("display", "block");
+    focusBubble(d.Abbrev);
   });
 
 node.append("circle")
@@ -1706,7 +1669,6 @@ function ticked() {
 
 function hideInfo() {
   d3.select("#info-panel").style("display", "none");
-
   if (selectedNode) {
     selectedNode.fx = null;
     selectedNode.fy = null;
@@ -1717,52 +1679,38 @@ function hideInfo() {
     selectedNodeElem = null;
   }
 }
+
+function focusBubble(abbrev) {
+  const match = data.find(d => d.Abbrev === abbrev);
+  if (!match) return;
+
+  if (selectedNode) {
+    selectedNode.fx = null;
+    selectedNode.fy = null;
+    d3.select(selectedNodeElem).select("circle")
+      .transition().duration(300)
+      .attr("r", originalRadius);
+  }
+
+  selectedNode = match;
+  selectedNodeElem = d3.selectAll("g").filter(d => d === match).node();
+  originalRadius = match.Size;
+
+  match.fx = match.x;
+  match.fy = match.y;
+
+  d3.select(selectedNodeElem).select("circle")
+    .transition().duration(300)
+    .attr("r", match.Size * 1.2);
+
+  d3.select("#info-title").text(match.SubArea);
+  d3.select("#info-body").html(`
+    <strong>Progress:</strong> ${match.Progress.toFixed(1)}%<br/>
+    <strong>Status:</strong> ${match.Status}
+  `);
+  d3.select("#info-panel").style("display", "block");
+}
 </script>
-legend_html_rows = ""
-for _, row in sub_area_df.iterrows():
-    abbrev = row['Abbrev']
-    full_name = row['Sub Area']
-    legend_html_rows += f"""
-    <tr>
-        <td style='border:1px solid #ccc; padding:4px;'>{abbrev}</td>
-        <td style='border:1px solid #ccc; padding:4px;'>{full_name}</td>
-        <td style='border:1px solid #ccc; padding:4px;'>
-            <button onclick="triggerBubble('{abbrev}')" style='font-size:12px; padding:2px 8px;'>🔍</button>
-        </td>
-    </tr>
-    """
-
-legend_block = f"""
-<!-- Legend Table (Click to Focus Bubble) -->
-<div style="position:absolute; top:30px; right:30px; background:#fff; border:1px solid #ccc; padding:10px; font-size:13px; max-height:80%; overflow:auto; box-shadow:0 2px 6px rgba(0,0,0,0.1); z-index:999;">
-  <h4 style="margin-top:0;">📘 Legend</h4>
-  <table style="border-collapse:collapse; font-size:13px;">
-    <thead>
-      <tr>
-        <th style="border:1px solid #ccc; padding:4px;">Abbrev</th>
-        <th style="border:1px solid #ccc; padding:4px;">Name</th>
-        <th style="border:1px solid #ccc; padding:4px;">Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {legend_html_rows}
-    </tbody>
-  </table>
-</div>
-
-<script>
-  function triggerBubble(abbrev) {{
-    d3.selectAll("g").each(function(d) {{
-      if (d.Abbrev === abbrev) {{
-        this.dispatchEvent(new Event('click'));
-      }}
-    }});
-  }}
-</script>
-"""
-
-html_code = html_code.replace('</body></html>', legend_block + '</body></html>')
-
 </body>
 </html>
 '''
@@ -1772,11 +1720,40 @@ html_code = html_code.replace('</body></html>', legend_block + '</body></html>')
 
 
 
-            col1 = st.container()
+
+            col1, col2 = st.columns([3, 1])
 
             with col1:
                 components.html(html_code, height=800)
                 st.caption("🧲 Force-directed bubble map + interactive legend")
+
+
+
+
+            with col2:
+                st.markdown("### 📘 Abbreviation Legend")
+            
+                legend_html = """
+                <style>
+                  .legend-row {
+                    cursor: pointer;
+                  }
+                  .legend-row:hover {
+                    background-color: #f0f0f0;
+                  }
+                </style>
+                <table style='width: 100%; font-size: 13px; font-family: Arial, sans-serif;'>
+                  <thead>
+                    <tr><th>Abbrev</th><th>Full Name</th></tr>
+                  </thead>
+                  <tbody>
+                """
+                for _, row in legend_table.iterrows():
+                    legend_html += f"<tr class='legend-row' onclick='focusBubble(\"{row['Abbrev']}\")'><td>{row['Abbrev']}</td><td>{row['Sub Area']}</td></tr>"
+                legend_html += "</tbody></table>"
+            
+                st.components.v1.html(legend_html + "<script></script>", height=400, scrolling=True)
+
 
 
             
