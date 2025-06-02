@@ -1664,6 +1664,33 @@ setInterval(() => {
 }, 4000);
 
 let selectedNode = null;
+function focusBubble(target) {
+  node.each(function(d) {
+    if (d !== target) {
+      d.fx = null;
+      d.fy = null;
+      d3.select(this).select("circle")
+        .transition().duration(300)
+        .style("opacity", 0.1);  // gelapkan
+    } else {
+      d3.select(this).select("circle")
+        .transition().duration(300)
+        .style("opacity", 1.0);  // tetap terang
+    }
+  });
+
+  simulation.stop(); // hentikan animasi
+}
+
+function resetFocus() {
+  node.each(function(d) {
+    d3.select(this).select("circle")
+      .transition().duration(300)
+      .style("opacity", 1.0);
+  });
+  simulation.alpha(0.3).restart(); // lanjutkan animasi semua
+}
+
 let selectedNodeElem = null;
 let originalRadius = null;
 
@@ -1672,10 +1699,40 @@ const node = zoomLayer.selectAll("g")
   .enter().append("g")
   .style("cursor", "pointer")
   .on("click", function(event, d) {
-    if (selectedNode === d) {
-      hideInfo();
-      return;
-    }
+  if (selectedNode === d) {
+    hideInfo();
+    resetFocus();
+    return;
+  }
+
+  if (selectedNode) {
+    selectedNode.fx = null;
+    selectedNode.fy = null;
+    d3.select(selectedNodeElem).select("circle")
+      .transition().duration(300)
+      .attr("r", originalRadius);
+  }
+
+  selectedNode = d;
+  selectedNodeElem = this;
+  originalRadius = d.Size;
+
+  d.fx = d.x;
+  d.fy = d.y;
+  d3.select(this).select("circle")
+    .transition().duration(300)
+    .attr("r", d.Size * 1.2);
+
+  focusBubble(d); // 🔥 tambahkan spotlight logic
+
+  d3.select("#info-title").text(d.SubArea);
+  d3.select("#info-body").html(`
+    <strong>Progress:</strong> ${d.Progress.toFixed(1)}%<br/>
+    <strong>Status:</strong> ${d.Status}
+  `);
+  d3.select("#info-panel").style("display", "block");
+});
+
 
     if (selectedNode) {
       selectedNode.fx = null;
