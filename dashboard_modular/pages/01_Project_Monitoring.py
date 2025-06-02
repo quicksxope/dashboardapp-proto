@@ -1537,54 +1537,71 @@ def main():
 <head>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
-<body style="margin:0; background-color:#fff;">
-<svg viewBox="0 0 1200 900" width="100%" height="800" preserveAspectRatio="xMidYMid meet"></svg>
-<!-- Legend Table -->
-<div style="position: absolute; top: 20px; left: 20px; background: #fff; border: 1px solid #ccc;
-    padding: 10px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 13px; color: #111;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 500px; overflow-y: auto; z-index: 100;">
-  <div style="font-weight: bold; margin-bottom: 6px;">📘 Abbreviation Legend</div>
-  <table style="border-collapse: collapse;">
-    <thead><tr><th style="text-align:left;padding-right:10px;">Abbrev</th><th style="text-align:left;">Full Name</th></tr></thead>
-    <tbody>
-      {legend_rows}
-    </tbody>
-  </table>
-</div>
-<!-- Panel Info -->
-<div id="info-panel"
- style="
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: #f9fafb;
-  border: 1px solid #ddd;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  color: #111;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  display: none;
-  max-width: 240px;
-  z-index: 99;
-  word-wrap: break-word;
-  white-space: normal;
-  line-height: 1.4;
-  position: fixed;
-">
-  <div style="display: flex; justify-content: space-between; align-items: center;">
-    <div id="info-title" style="font-weight: bold; margin-bottom: 6px;"></div>
-    <button onclick="hideInfo()" style="
-      background: none;
-      border: none;
-      font-weight: bold;
-      font-size: 14px;
-      cursor: pointer;
-      color: #888;
-    ">✕</button>
+<body style="margin:0; background-color:#fff; font-family:Arial, sans-serif;">
+
+<div style="display: flex; flex-direction: row;">
+
+  <!-- BUBBLE CHART AREA -->
+  <div style="flex: 3; position: relative;">
+    <svg viewBox="0 0 1200 900" width="100%" height="800" preserveAspectRatio="xMidYMid meet"></svg>
+
+    <!-- Panel Info -->
+    <div id="info-panel"
+     style="
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #f9fafb;
+      border: 1px solid #ddd;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #111;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: none;
+      max-width: 240px;
+      z-index: 99;
+      word-wrap: break-word;
+      white-space: normal;
+      line-height: 1.4;
+    ">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div id="info-title" style="font-weight: bold; margin-bottom: 6px;"></div>
+        <button onclick="hideInfo()" style="
+          background: none;
+          border: none;
+          font-weight: bold;
+          font-size: 14px;
+          cursor: pointer;
+          color: #888;
+        ">✕</button>
+      </div>
+      <div id="info-body"></div>
+    </div>
   </div>
-  <div id="info-body"></div>
+
+  <!-- LEGEND TABLE -->
+  <div style="flex: 1; padding: 16px; overflow-y: auto; height: 800px;">
+    <h3 style="margin-top: 0;">📘 Abbreviation Legend</h3>
+    <table style="border-collapse: collapse; width: 100%; font-size: 13px;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding: 8px; border-bottom: 2px solid #ccc;">Abbrev</th>
+          <th style="text-align:left; padding: 8px; border-bottom: 2px solid #ccc;">Full Name</th>
+        </tr>
+      </thead>
+      <tbody>
+''' + '\n'.join([
+    f"""<tr onclick="window.postMessage('{row['Abbrev']}', '*')" style="cursor:pointer;"
+         onmouseover="this.style.background='#f0f0f0';"
+         onmouseout="this.style.background='none';">
+          <td style="padding:6px 12px; border-bottom: 1px solid #eee;">{row['Abbrev']}</td>
+          <td style="padding:6px 12px; border-bottom: 1px solid #eee;">{row['Sub Area']}</td>
+        </tr>""" for _, row in sub_area_df.sort_values('Abbrev').iterrows()
+]) + '''
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <script>
@@ -1605,16 +1622,26 @@ const data = ''' + str(bubbles_json) + ''';
 const width = 1200;
 const height = 900;
 
-// Define gradients
+// Define gradients for each bubble
 const defs = svgElem.append("defs");
+
 data.forEach((d, i) => {
   const grad = defs.append("radialGradient")
     .attr("id", "grad" + i)
     .attr("cx", "50%")
     .attr("cy", "50%")
     .attr("r", "50%");
-  grad.append("stop").attr("offset", "0%").attr("stop-color", d.Color).attr("stop-opacity", 0.3);
-  grad.append("stop").attr("offset", "100%").attr("stop-color", d.Color).attr("stop-opacity", 1);
+
+  grad.append("stop")
+    .attr("offset", "0%"
+    )
+    .attr("stop-color", d.Color)
+    .attr("stop-opacity", 0.3);
+
+  grad.append("stop")
+    .attr("offset", "100%")
+    .attr("stop-color", d.Color)
+    .attr("stop-opacity", 1);
 });
 
 // Simulation
@@ -1645,7 +1672,35 @@ const node = zoomLayer.selectAll("g")
   .enter().append("g")
   .style("cursor", "pointer")
   .on("click", function(event, d) {
-    focusBubble(d.Abbrev);
+    if (selectedNode === d) {
+      hideInfo();
+      return;
+    }
+
+    if (selectedNode) {
+      selectedNode.fx = null;
+      selectedNode.fy = null;
+      d3.select(selectedNodeElem).select("circle")
+        .transition().duration(300)
+        .attr("r", originalRadius);
+    }
+
+    selectedNode = d;
+    selectedNodeElem = this;
+    originalRadius = d.Size;
+
+    d.fx = d.x;
+    d.fy = d.y;
+    d3.select(this).select("circle")
+      .transition().duration(300)
+      .attr("r", d.Size * 1.2);
+
+    d3.select("#info-title").text(d.SubArea);
+    d3.select("#info-body").html(`
+      <strong>Progress:</strong> ${d.Progress.toFixed(1)}%<br/>
+      <strong>Status:</strong> ${d.Status}
+    `);
+    d3.select("#info-panel").style("display", "block");
   });
 
 node.append("circle")
@@ -1680,6 +1735,7 @@ function ticked() {
 
 function hideInfo() {
   d3.select("#info-panel").style("display", "none");
+
   if (selectedNode) {
     selectedNode.fx = null;
     selectedNode.fy = null;
@@ -1691,37 +1747,7 @@ function hideInfo() {
   }
 }
 
-function focusBubble(abbrev) {
-  const match = data.find(d => d.Abbrev === abbrev);
-  if (!match) return;
-
-  if (selectedNode) {
-    selectedNode.fx = null;
-    selectedNode.fy = null;
-    d3.select(selectedNodeElem).select("circle")
-      .transition().duration(300)
-      .attr("r", originalRadius);
-  }
-
-  selectedNode = match;
-  selectedNodeElem = d3.selectAll("g").filter(d => d === match).node();
-  originalRadius = match.Size;
-
-  match.fx = match.x;
-  match.fy = match.y;
-
-  d3.select(selectedNodeElem).select("circle")
-    .transition().duration(300)
-    .attr("r", match.Size * 1.2);
-
-  d3.select("#info-title").text(match.SubArea);
-  d3.select("#info-body").html(`
-    <strong>Progress:</strong> ${match.Progress.toFixed(1)}%<br/>
-    <strong>Status:</strong> ${match.Status}
-  `);
-  d3.select("#info-panel").style("display", "block");
-}
-// --- ADD THIS: Listen to messages from Streamlit legend table ---
+// --- Listen to legend clicks ---
 window.addEventListener("message", function(event) {
   const abbrev = event.data;
   const target = data.find(d => d.Abbrev === abbrev);
@@ -1755,11 +1781,11 @@ window.addEventListener("message", function(event) {
   `);
   d3.select("#info-panel").style("display", "block");
 });
-
 </script>
 </body>
 </html>
 '''
+
 
 
 
