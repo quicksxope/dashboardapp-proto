@@ -1788,35 +1788,40 @@ window.addEventListener("message", function(event) {
                     'Full Name': sub_area_df['Sub Area']
                 }).sort_values('Abbrev')
             
-                # Convert legend_table to HTML with onclick events
+                # Build HTML table rows
                 html_rows = ""
                 for _, row in legend_table.iterrows():
                     abbrev = row['Abbrev']
                     full_name = row['Full Name']
                     html_rows += f"""
-                    <tr onclick="window.parent.postMessage('{abbrev}', '*')" style='cursor:pointer;'>
+                    <tr onclick="window.parent.postMessage('{abbrev}', '*')" style='cursor:pointer;' 
+                        onmouseover="this.style.background='#f3f4f6';" 
+                        onmouseout="this.style.background='none';">
                         <td style='padding: 6px 12px; border-bottom: 1px solid #eee;'>{abbrev}</td>
                         <td style='padding: 6px 12px; border-bottom: 1px solid #eee;'>{full_name}</td>
                     </tr>
                     """
             
+                # Combine full HTML table
                 html_table = f"""
                 <div style="max-height:500px; overflow-y:auto; font-family:Arial, sans-serif; font-size:13px;">
-                <table style="border-collapse: collapse; width: 100%;">
-                    <thead>
-                        <tr>
-                            <th style='text-align:left; padding: 8px; border-bottom: 2px solid #ccc;'>Abbrev</th>
-                            <th style='text-align:left; padding: 8px; border-bottom: 2px solid #ccc;'>Full Name</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {html_rows}
-                    </tbody>
-                </table>
+                    <table style="border-collapse: collapse; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style='text-align:left; padding: 8px; border-bottom: 2px solid #ccc;'>Abbrev</th>
+                                <th style='text-align:left; padding: 8px; border-bottom: 2px solid #ccc;'>Full Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {html_rows}
+                        </tbody>
+                    </table>
                 </div>
                 """
             
+                # Render the HTML table properly
                 st.markdown(html_table, unsafe_allow_html=True)
+
             
             
             
