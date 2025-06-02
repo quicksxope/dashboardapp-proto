@@ -1742,17 +1742,18 @@ function focusBubble(abbrev) {
                     background-color: #f0f0f0;
                   }
                 </style>
-                <table style='width: 100%; font-size: 13px; font-family: Arial, sans-serif;'>
+                <table style='width: 100%; font-size: 13px; font-family: Arial, sans-serif; border-collapse: collapse;'>
                   <thead>
-                    <tr><th>Abbrev</th><th>Full Name</th></tr>
+                    <tr><th style='text-align:left;'>Abbrev</th><th style='text-align:left;'>Full Name</th></tr>
                   </thead>
                   <tbody>
                 """
                 for _, row in legend_table.iterrows():
-                    legend_html += f"<tr class='legend-row' onclick='focusBubble(\"{row['Abbrev']}\")'><td>{row['Abbrev']}</td><td>{row['Sub Area']}</td></tr>"
+                    legend_html += f"<tr class='legend-row' onclick='focusBubble(\"{row['Abbrev']}\")'><td>{row['Abbrev']}</td><td>{row['Full Name']}</td></tr>"
                 legend_html += "</tbody></table>"
             
-                st.components.v1.html(legend_html + "<script></script>", height=400, scrolling=True)
+                st.components.v1.html(legend_html + "<script></script>", height=420, scrolling=True)
+
 
 
 
