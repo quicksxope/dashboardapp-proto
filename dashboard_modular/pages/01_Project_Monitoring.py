@@ -1622,29 +1622,17 @@ const data = ''' + str(bubbles_json) + ''';
 const width = 1200;
 const height = 900;
 
-// Define gradients for each bubble
 const defs = svgElem.append("defs");
-
 data.forEach((d, i) => {
   const grad = defs.append("radialGradient")
     .attr("id", "grad" + i)
     .attr("cx", "50%")
     .attr("cy", "50%")
     .attr("r", "50%");
-
-  grad.append("stop")
-    .attr("offset", "0%"
-    )
-    .attr("stop-color", d.Color)
-    .attr("stop-opacity", 0.3);
-
-  grad.append("stop")
-    .attr("offset", "100%")
-    .attr("stop-color", d.Color)
-    .attr("stop-opacity", 1);
+  grad.append("stop").attr("offset", "0%").attr("stop-color", d.Color).attr("stop-opacity", 0.3);
+  grad.append("stop").attr("offset", "100%").attr("stop-color", d.Color).attr("stop-opacity", 1);
 });
 
-// Simulation
 const simulation = d3.forceSimulation(data)
   .alpha(0.6)
   .alphaDecay(0)
@@ -1664,82 +1652,45 @@ setInterval(() => {
 }, 4000);
 
 let selectedNode = null;
+let selectedNodeElem = null;
+let originalRadius = null;
+
 function focusBubble(target) {
   node.each(function(d) {
     if (d !== target) {
       d.fx = null;
       d.fy = null;
-      d3.select(this).select("circle")
-        .transition().duration(300)
-        .style("opacity", 0.1);  // gelapkan
+      d3.select(this).select("circle").transition().duration(300).style("opacity", 0.1);
     } else {
-      d3.select(this).select("circle")
-        .transition().duration(300)
-        .style("opacity", 1.0);  // tetap terang
+      d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
     }
   });
-
-  simulation.stop(); // hentikan animasi
+  simulation.stop();
 }
 
 function resetFocus() {
   node.each(function(d) {
-    d3.select(this).select("circle")
-      .transition().duration(300)
-      .style("opacity", 1.0);
+    d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
   });
-  simulation.alpha(0.3).restart(); // lanjutkan animasi semua
+  simulation.alpha(0.3).restart();
 }
-
-let selectedNodeElem = null;
-let originalRadius = null;
 
 const node = zoomLayer.selectAll("g")
   .data(data)
   .enter().append("g")
   .style("cursor", "pointer")
   .on("click", function(event, d) {
-  if (selectedNode === d) {
-    hideInfo();
-    resetFocus();
-    return;
-  }
-
-  if (selectedNode) {
-    selectedNode.fx = null;
-    selectedNode.fy = null;
-    d3.select(selectedNodeElem).select("circle")
-      .transition().duration(300)
-      .attr("r", originalRadius);
-  }
-
-  selectedNode = d;
-  selectedNodeElem = this;
-  originalRadius = d.Size;
-
-  d.fx = d.x;
-  d.fy = d.y;
-  d3.select(this).select("circle")
-    .transition().duration(300)
-    .attr("r", d.Size * 1.2);
-
-  focusBubble(d); // 🔥 tambahkan spotlight logic
-
-  d3.select("#info-title").text(d.SubArea);
-  d3.select("#info-body").html(`
-    <strong>Progress:</strong> ${d.Progress.toFixed(1)}%<br/>
-    <strong>Status:</strong> ${d.Status}
-  `);
-  d3.select("#info-panel").style("display", "block");
-});
-
+    if (selectedNode === d) {
+      hideInfo();
+      resetFocus();
+      return;
+    }
 
     if (selectedNode) {
       selectedNode.fx = null;
       selectedNode.fy = null;
       d3.select(selectedNodeElem).select("circle")
-        .transition().duration(300)
-        .attr("r", originalRadius);
+        .transition().duration(300).attr("r", originalRadius);
     }
 
     selectedNode = d;
@@ -1749,14 +1700,12 @@ const node = zoomLayer.selectAll("g")
     d.fx = d.x;
     d.fy = d.y;
     d3.select(this).select("circle")
-      .transition().duration(300)
-      .attr("r", d.Size * 1.2);
+      .transition().duration(300).attr("r", d.Size * 1.2);
+
+    focusBubble(d);
 
     d3.select("#info-title").text(d.SubArea);
-    d3.select("#info-body").html(`
-      <strong>Progress:</strong> ${d.Progress.toFixed(1)}%<br/>
-      <strong>Status:</strong> ${d.Status}
-    `);
+    d3.select("#info-body").html(`<strong>Progress:</strong> ${d.Progress.toFixed(1)}%<br/><strong>Status:</strong> ${d.Status}`);
     d3.select("#info-panel").style("display", "block");
   });
 
@@ -1792,16 +1741,15 @@ function ticked() {
 
 function hideInfo() {
   d3.select("#info-panel").style("display", "none");
-
   if (selectedNode) {
     selectedNode.fx = null;
     selectedNode.fy = null;
     d3.select(selectedNodeElem).select("circle")
-      .transition().duration(300)
-      .attr("r", originalRadius);
+      .transition().duration(300).attr("r", originalRadius);
     selectedNode = null;
     selectedNodeElem = null;
   }
+  resetFocus();
 }
 
 // --- Listen to legend clicks ---
@@ -1819,8 +1767,7 @@ window.addEventListener("message", function(event) {
     selectedNode.fx = null;
     selectedNode.fy = null;
     d3.select(selectedNodeElem).select("circle")
-      .transition().duration(300)
-      .attr("r", originalRadius);
+      .transition().duration(300).attr("r", originalRadius);
   }
 
   selectedNode = target;
@@ -1828,20 +1775,19 @@ window.addEventListener("message", function(event) {
   originalRadius = target.Size;
 
   d3.select(targetNode).select("circle")
-    .transition().duration(300)
-    .attr("r", target.Size * 1.2);
+    .transition().duration(300).attr("r", target.Size * 1.2);
+
+  focusBubble(target);
 
   d3.select("#info-title").text(target.SubArea);
-  d3.select("#info-body").html(`
-    <strong>Progress:</strong> ${target.Progress.toFixed(1)}%<br/>
-    <strong>Status:</strong> ${target.Status}
-  `);
+  d3.select("#info-body").html(`<strong>Progress:</strong> ${target.Progress.toFixed(1)}%<br/><strong>Status:</strong> ${target.Status}`);
   d3.select("#info-panel").style("display", "block");
 });
 </script>
 </body>
 </html>
 '''
+
 
 
 
