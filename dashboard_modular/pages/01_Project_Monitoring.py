@@ -1793,60 +1793,16 @@ window.addEventListener("message", function(event) {
 
 
 
-            col1, col2 = st.columns([3, 1])
-
-            with col1:
-                components.html(html_code, height=800)
-                st.caption("🧲 Force-directed bubble map + interactive legend")
-
-
-
-            legend_table = pd.DataFrame({
-                'Abbrev': sub_area_df['Abbrev'],
-                'Full Name': sub_area_df['Sub Area']
-            }).sort_values('Abbrev')
-
-            with col2:
-                st.markdown("### 📘 Abbreviation Legend")
+            # Tampilkan 1 kolom penuh karena HTML sudah gabung chart + tabel
+            # Tampilkan 1 kolom penuh karena HTML sudah gabung chart + tabel
+            st.markdown("## 📊 Zone Bubble Chart with Clickable Legend")
             
-                legend_table = pd.DataFrame({
-                    'Abbrev': sub_area_df['Abbrev'],
-                    'Full Name': sub_area_df['Sub Area']
-                }).sort_values('Abbrev')
-            
-                # Build HTML table rows
-                html_rows = ""
-                for _, row in legend_table.iterrows():
-                    abbrev = row['Abbrev']
-                    full_name = row['Full Name']
-                    html_rows += f"""
-                    <tr onclick="window.parent.postMessage('{abbrev}', '*')" style='cursor:pointer;' 
-                        onmouseover="this.style.background='#f3f4f6';" 
-                        onmouseout="this.style.background='none';">
-                        <td style='padding: 6px 12px; border-bottom: 1px solid #eee;'>{abbrev}</td>
-                        <td style='padding: 6px 12px; border-bottom: 1px solid #eee;'>{full_name}</td>
-                    </tr>
-                    """
-            
-                # Combine full HTML table
-                html_table = f"""
-                <div style="max-height:500px; overflow-y:auto; font-family:Arial, sans-serif; font-size:13px;">
-                    <table style="border-collapse: collapse; width: 100%;">
-                        <thead>
-                            <tr>
-                                <th style='text-align:left; padding: 8px; border-bottom: 2px solid #ccc;'>Abbrev</th>
-                                <th style='text-align:left; padding: 8px; border-bottom: 2px solid #ccc;'>Full Name</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {html_rows}
-                        </tbody>
-                    </table>
-                </div>
-                """
-            
-                # Render the HTML table properly
-                st.markdown(html_table, unsafe_allow_html=True)
+            components.html(html_code, height=820)
+            st.caption("🧲 Force-directed bubble map + interactive legend (click table or bubble)")
+
+
+
+
 
             
             
