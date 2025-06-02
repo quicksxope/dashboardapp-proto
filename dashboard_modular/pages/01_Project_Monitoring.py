@@ -1539,7 +1539,18 @@ def main():
 </head>
 <body style="margin:0; background-color:#fff;">
 <svg viewBox="0 0 1200 900" width="100%" height="800" preserveAspectRatio="xMidYMid meet"></svg>
-
+<!-- Legend Table -->
+<div style="position: absolute; top: 20px; left: 20px; background: #fff; border: 1px solid #ccc;
+    padding: 10px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 13px; color: #111;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 500px; overflow-y: auto; z-index: 100;">
+  <div style="font-weight: bold; margin-bottom: 6px;">📘 Abbreviation Legend</div>
+  <table style="border-collapse: collapse;">
+    <thead><tr><th style="text-align:left;padding-right:10px;">Abbrev</th><th style="text-align:left;">Full Name</th></tr></thead>
+    <tbody>
+      {legend_rows}
+    </tbody>
+  </table>
+</div>
 <!-- Panel Info -->
 <div id="info-panel"
  style="
