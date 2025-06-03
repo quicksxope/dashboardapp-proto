@@ -583,7 +583,7 @@ def main():
                     st.info("No data available.")
 
     # --- Timeline & Task Table ---
-    with section_card("🗓 Interactive Project Timeline"):
+    with section_card("🗓 Project Timeline"):
         # Define color map
         color_map = {
             'SELESAI': 'green',
@@ -1155,7 +1155,7 @@ def main():
             
             # Task Details Panel Tab
             with timeline_tabs[2]:
-                st.markdown("### 📝 Interactive Task Details")
+                st.markdown("### 📝 Task Details")
                 
                 # Create an expander for each task with details
                 for _, row in timeline_df.iterrows():
@@ -1798,10 +1798,10 @@ window.addEventListener("message", function(event) {
 
             # Tampilkan 1 kolom penuh karena HTML sudah gabung chart + tabel
             # Tampilkan 1 kolom penuh karena HTML sudah gabung chart + tabel
-            st.markdown("## 📊 Zone Bubble Chart with Clickable Legend")
+            st.markdown("## 📊 Zone Bubble Chart")
             
             components.html(html_code, height=820)
-            st.caption("🧲 Force-directed bubble map + interactive legend (click table or bubble)")
+            st.caption("🧲 Click table or bubble")
 
 
 
