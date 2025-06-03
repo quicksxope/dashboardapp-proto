@@ -85,8 +85,8 @@ def metric_card(title, value, sub, icon="✅", bg="#2196f3"):
 
 
 
-if uploaded_file:
-    df = pd.read_excel(uploaded_file)
+if contract_file:
+    df = pd.read_excel(contract_file)
 
     # Clean column names
     df.columns = [str(col).strip() for col in df.columns]
