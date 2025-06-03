@@ -44,7 +44,7 @@ st.markdown("""
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     margin-bottom: 1.5rem;
 ">
-    
+    Project Monitoring
 </div>
 """, unsafe_allow_html=True)
 
