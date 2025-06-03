@@ -84,6 +84,7 @@ def metric_card(title, value, sub, icon="✅", bg="#2196f3"):
     """
 
 
+
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
@@ -278,7 +279,9 @@ if uploaded_file:
 
 
 if financial_file:
-
+    df_financial = pd.read_excel(financial_file)
+    st.success("Financial progress file loaded!")
+    
     import plotly.graph_objects as go
 
 
