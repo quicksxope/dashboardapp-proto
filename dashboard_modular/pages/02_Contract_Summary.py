@@ -376,18 +376,18 @@ if financial_file:
    
    
 if payment_term_file:
-        df = pd.read_excel(payment_term_file)
-        df.columns = df.columns.str.strip().str.upper()
+        df_terms = pd.read_excel(payment_term_file)
+        df_terms.columns = df_terms.columns.str.strip().str.upper()
 
-        df['START_DATE'] = pd.to_datetime(df['START_DATE'], errors='coerce')
-        df['END_DATE'] = pd.to_datetime(df['END_DATE'], errors='coerce')
+        df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
+        df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
         # Total paid (hanya yang status Paid)
-        df_paid = df[df['STATUS'].str.upper() == 'PAID']
+        df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
         total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
         total_paid.columns = ['VENDOR', 'TOTAL_PAID']
 
-        vendor_contract = df[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
+        vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
         vendor_summary = pd.merge(vendor_contract, total_paid, on='VENDOR', how='left')
         vendor_summary['TOTAL_PAID'] = vendor_summary['TOTAL_PAID'].fillna(0)
         vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
@@ -395,7 +395,7 @@ if payment_term_file:
         vendor_summary['VENDOR_DISPLAY'] = vendor_summary['VENDOR'] + ' (' + vendor_summary['PCT_LABEL'] + ')'
 
         # Merge ke long format
-        df_plot = pd.merge(df, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL', 'VENDOR_DISPLAY']], on='VENDOR', how='left')
+        df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL', 'VENDOR_DISPLAY']], on='VENDOR', how='left')
 
         # Hitung tanggal pembayaran per termin
         df_plot['PAYMENT_DATE'] = df_plot.apply(
