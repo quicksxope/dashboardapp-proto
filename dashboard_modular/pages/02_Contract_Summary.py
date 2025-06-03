@@ -84,23 +84,6 @@ def metric_card(title, value, sub, icon="✅", bg="#2196f3"):
     """
 
 
-# --- Upload File in Sidebar ---
-st.sidebar.header("📂 Upload Your File")
-uploaded_file = st.sidebar.file_uploader("Upload Contract Excel File (.xlsx)", type="xlsx") 
-st.sidebar.markdown("---")  # separator visual
-st.sidebar.header("💸 Upload Financial Progress")
-financial_file = st.sidebar.file_uploader("Upload Financial Progress Excel (.xlsx)", type="xlsx", key="finance")
-
-# --- Sidebar Upload for Payment Term File ---
-st.sidebar.header("📆 Upload Payment Term File")
-payment_term_file = st.sidebar.file_uploader(
-    "Upload Payment Term Excel File (.xlsx)", 
-    type="xlsx", 
-    key="payment_term_gantt"
-)
-
-
-
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
@@ -295,9 +278,7 @@ if uploaded_file:
 
 
 if financial_file:
-    df_financial = pd.read_excel(financial_file)
-    st.success("Financial progress file loaded!")
-    
+
     import plotly.graph_objects as go
 
 
