@@ -69,24 +69,26 @@ def section_card(title=None):
 
 
 def metric_card(title, value, sub, icon="✅", theme="blue"):
-    themes = {
-        "blue": "#A5D8FF",
-        "green": "#B2F2BB",
-        "purple": "#D0BFFF",
-        "pink": "#FCC2D7",
-        "yellow": "#FFE066",
-        "gray": "#DEE2E6"
+    gradients = {
+        "blue": "linear-gradient(135deg, #A5D8FF, #74C0FC)",
+        "green": "linear-gradient(135deg, #B2F2BB, #69DB7C)",
+        "purple": "linear-gradient(135deg, #D0BFFF, #B197FC)",
+        "pink": "linear-gradient(135deg, #FCC2D7, #FF8787)",
+        "yellow": "linear-gradient(135deg, #FFE066, #FAB005)",
+        "gray": "linear-gradient(135deg, #DEE2E6, #ADB5BD)"
     }
-    bg = themes.get(theme, "#A5D8FF")
-    text_color = "#222222"
-    sub_color = "#555555"
-    shadow_color = "rgba(0, 0, 0, 0.1)"
+    background = gradients.get(theme, gradients["blue"])
+    text_color = "#1e1e1e"
+    sub_color = "#444"
+    shadow_color = "rgba(0, 0, 0, 0.15)"
     
     return f"""
-    <div class="metric-card" style="padding:1.5rem; background:{bg}; border-radius:1.5rem; box-shadow:0 4px 12px {shadow_color}; text-align:center; margin-bottom:1.2rem; height:100%; width:100%; max-width:100%; transition:0.3s ease;">
+    <div class="metric-card" style="padding:1.5rem; background:{background}; border-radius:1.5rem;
+         box-shadow:0 6px 14px {shadow_color}; text-align:center; margin-bottom:1.5rem;
+         height:100%; width:100%; max-width:100%; transition:0.3s ease;">
         <div style="font-size:2rem; margin-bottom:0.5rem;">{icon}</div>
         <div style="font-size:1.1rem; font-weight:600; color:{text_color}; margin-bottom:0.3rem;">{title}</div>
-        <div style="font-size:calc(1.7rem + 0.5vw); font-weight:800; color:{text_color}; margin:0.4rem 0;">{value}</div>
+        <div style="font-size:calc(1.8rem + 0.5vw); font-weight:800; color:{text_color}; margin:0.5rem 0;">{value}</div>
         <div style="color:{sub_color}; font-size:0.85rem;">{sub}</div>
     </div>
     """
