@@ -48,181 +48,210 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- Section Card ---
+# --- Section Card Function ---
 def section_card(title=None):
     section = st.container()
+    section_id = f"section_{title.replace(' ', '_').lower() if title else 'no_title'}"
     if title:
         section.markdown(f"""
-        <div style=\"background: linear-gradient(to right, #3498db, #1abc9c); color: white; padding: 12px 15px; border-radius: 10px 10px 0 0; font-weight: 600; font-size: 1.2rem;\">
+        <div id=\"{section_id}_header\" style=\"background: linear-gradient(to right, #3498db, #1abc9c); color: white; padding: 12px 15px; border-radius: 10px 10px 0 0; margin-bottom: 0; font-weight: 600; font-size: 1.2rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\">
             {title}
         </div>
         """, unsafe_allow_html=True)
     return section
 
-def metric_card(title, value, sub, icon="✅", bg="#6C5CE7"):
-    gradient = f"linear-gradient(135deg, {bg}, #00CEC9)"
+
+
+# --- Metric Card Function ---
+def metric_card(title, value, sub, icon="✅", bg="#2196f3"):
+    gradient = f"linear-gradient(135deg, {bg}, {bg})"
+    text_color = "#ffffff"
+    sub_color = "#e0e0e0"
+    shadow_color = "rgba(0, 0, 0, 0.3)"
     return f"""
-    <div class=\"metric-card\" style=\"
-        padding: 1.2rem;
-        background: {gradient};
-        border-radius: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        text-align: center;
-        height: 100%;
-        margin-bottom: 1.5rem;   /* ✅ Tambahkan ini */
-    \">
-        <div style=\"font-size:1.8rem;\">{icon}</div>
-        <div style=\"font-size:1.1rem; font-weight:600; color:white;\">{title}</div>
-        <div style=\"font-size:2rem; font-weight:700; color:white;\">{value}</div>
-        <div style=\"color:#DADDE1; font-size:0.85rem;\">{sub}</div>
+    <div class=\"metric-card\" style=\"padding:1.2rem; background:{gradient}; border-radius:1rem; box-shadow:0 3px 10px {shadow_color}; text-align:center; margin-bottom:1rem; height:100%; width:100%; max-width:100%; border:none !important; outline:none !important;\">
+        <div style=\"font-size:1.5rem; margin-bottom:0.3rem;\">{icon}</div>
+        <div style=\"font-size:1.2rem; font-weight:600; color:{text_color}; margin-bottom:0.5rem;\">{title}</div>
+        <div style=\"font-size:calc(1.5rem + 0.5vw); font-weight:700; color:{text_color}; margin:0.6rem 0;\">{value}</div>
+        <div style=\"color:{sub_color}; font-size:0.9rem;\">{sub}</div>
     </div>
     """
 
 
-# --- Chart Utils ---
-def get_color(pct): return '#2ECC71' if pct >= 50 else '#E74C3C'
+# --- Upload File in Sidebar ---
+st.sidebar.header("📂 Upload Your File")
+uploaded_file = st.sidebar.file_uploader("Upload Contract Excel File (.xlsx)", type="xlsx") 
+st.sidebar.markdown("---")  # separator visual
+st.sidebar.header("💸 Upload Financial Progress")
+financial_file = st.sidebar.file_uploader("Upload Financial Progress Excel (.xlsx)", type="xlsx", key="finance")
 
-def build_kpi_bar(df_subset, title):
-    fig = go.Figure()
-
-    show_legend_green = True
-    show_legend_red = True
-    show_legend_remaining = True
-
-    for _, row in df_subset.iterrows():
-        color = get_color(row['REALIZED_PCT'])
-        kontrak_name = row['KONTRAK']
-        realized = row['REALIZATION']
-        remaining = row['REMAINING']
-        total = row['CONTRACT_VALUE']
-        pct = row['REALIZED_PCT']
-
-        # --- Realized Bar ---
-        if pct >= 50:
-            fig.add_trace(go.Bar(
-                y=[kontrak_name],
-                x=[realized],
-                name="REALIZED ≥ 50%" if show_legend_green else None,
-                orientation='h',
-                marker=dict(color="#2ECC71"),
-                text=f"{pct:.1f}%",
-                textposition='inside',
-                showlegend=show_legend_green,
-                hovertemplate=(
-                    f"<b>{kontrak_name}</b><br>"
-                    f"Total Contract: {total:.1f} M<br>"
-                    f"Realized: {realized:.1f} M<br>"
-                    f"Remaining: {remaining:.1f} M<br>"
-                    f"% Realized: {pct:.1f}%<extra></extra>"
-                )
-            ))
-            show_legend_green = False
-        else:
-            fig.add_trace(go.Bar(
-                y=[kontrak_name],
-                x=[realized],
-                name="REALIZED < 50%" if show_legend_red else None,
-                orientation='h',
-                marker=dict(color="#E74C3C"),
-                text=f"{pct:.1f}%",
-                textposition='inside',
-                showlegend=show_legend_red,
-                hovertemplate=(
-                    f"<b>{kontrak_name}</b><br>"
-                    f"Total Contract: {total:.1f} M<br>"
-                    f"Realized: {realized:.1f} M<br>"
-                    f"Remaining: {remaining:.1f} M<br>"
-                    f"% Realized: {pct:.1f}%<extra></extra>"
-                )
-            ))
-            show_legend_red = False
-
-        # --- Remaining Bar ---
-        fig.add_trace(go.Bar(
-            y=[kontrak_name],
-            x=[remaining],
-            name="REMAINING" if show_legend_remaining else None,
-            orientation='h',
-            marker=dict(color="#D0D3D4"),
-            text=f"{remaining:.1f} M",
-            textposition='inside',
-            showlegend=show_legend_remaining,
-            hovertemplate=(
-                f"<b>{kontrak_name}</b><br>"
-                f"Total Contract: {total:.1f} M<br>"
-                f"Realized: {realized:.1f} M<br>"
-                f"Remaining: {remaining:.1f} M<br>"
-                f"% Realized: {pct:.1f}%<extra></extra>"
-            )
-        ))
-        show_legend_remaining = False
-
-    fig.update_layout(
-        barmode='stack',
-        title=title,
-        xaxis=dict(title="Contract Value (Millions)", tickformat=".0f"),
-        yaxis=dict(automargin=True),
-        height=600,
-        margin=dict(l=300, r=50, t=60, b=50),
-        dragmode=False,
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
-    )
-    return fig
+# --- Sidebar Upload for Payment Term File ---
+st.sidebar.header("📆 Upload Payment Term File")
+payment_term_file = st.sidebar.file_uploader(
+    "Upload Payment Term Excel File (.xlsx)", 
+    type="xlsx", 
+    key="payment_term_gantt"
+)
 
 
-# --- Main Processing ---
-if contract_file:
-    df = pd.read_excel(contract_file)
-    df.columns = [str(c).strip() for c in df.columns]
-    df.rename(columns={'Start Date': 'START', 'End Date': 'END', 'PROGRESS ACTUAL': 'PROGRESS'}, inplace=True)
+
+if uploaded_file:
+    df = pd.read_excel(uploaded_file)
+
+    # Clean column names
+    df.columns = [str(col).strip() for col in df.columns]
+
+    # Rename for consistency
+    df.rename(columns={
+        'Start Date': 'START',
+        'End Date': 'END',
+        'PROGRESS ACTUAL': 'PROGRESS'
+    }, inplace=True)
+
     df['START'] = pd.to_datetime(df['START'], errors='coerce')
     df['END'] = pd.to_datetime(df['END'], errors='coerce')
     df['DURATION'] = (df['END'] - df['START']).dt.days
     df['PROGRESS'] = pd.to_numeric(df['PROGRESS'], errors='coerce')
+
     today = pd.Timestamp.today()
     df['TIME_GONE'] = ((today - df['START']) / (df['END'] - df['START'])).clip(0, 1) * 100
 
-    # --- Metrics Display ---
+    # --- Metrics ---
+    total_contracts = len(df)
+    active_contracts = df[df['STATUS'] == 'ACTIVE'].shape[0]
+    non_active_contracts = df[df['STATUS'].str.contains('NON ACTIVE', case=False, na=False)].shape[0]
+    active_adendum_contracts = df[df['STATUS'].str.contains("ADENDUM", na=False, case=False)].shape[0]
+
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown(metric_card("Total Contracts", len(df), "All listed contracts", "📦"), unsafe_allow_html=True)
-        st.markdown(metric_card("Active Contracts", df[df['STATUS'] == 'ACTIVE'].shape[0], "Currently ongoing", "✅"), unsafe_allow_html=True)
+        st.markdown(metric_card("Total Contracts", total_contracts, "All listed contracts", "📦"), unsafe_allow_html=True)
+        st.markdown(metric_card("Active Contracts", active_contracts, "Currently ongoing", "✅"), unsafe_allow_html=True)
     with col2:
-        st.markdown(metric_card("Non-Active Contracts", df[df['STATUS'].str.contains('NON ACTIVE', case=False, na=False)].shape[0], "Finished or inactive", "🔝"), unsafe_allow_html=True)
-        st.markdown(metric_card("Active Adendum Contracts", df[df['STATUS'].str.contains('ADENDUM', case=False, na=False)].shape[0], "Contracts with Adendum", "📝"), unsafe_allow_html=True)
+        st.markdown(metric_card("Non-Active Contracts", non_active_contracts, "Finished or inactive", "🔝"), unsafe_allow_html=True)
+        st.markdown(metric_card("Active Adendum Contracts", active_adendum_contracts, "Contracts with Adendum", "📝"), unsafe_allow_html=True)
 
     # --- Gantt Chart ---
     with section_card("🗖️ Gantt Chart - Contract Timelines"):
-        df_plot = df.dropna(subset=['START', 'END'])
-        fig_gantt = px.timeline(df_plot.sort_values('START'), x_start='START', x_end='END', y='KONTRAK', color='STATUS',
-                                hover_data=['DURATION', 'PROGRESS', 'TIME_GONE'])
-        fig_gantt.update_yaxes(autorange='reversed')
+        df_sorted = df.sort_values('START')
+        df_plot = df_sorted.dropna(subset=['START', 'END'])  # Only valid ones plotted
+        fig_gantt = px.timeline(
+            df_plot,
+            x_start='START',
+            x_end='END',
+            y='KONTRAK',
+            color='STATUS',
+            hover_data=['DURATION', 'PROGRESS', 'TIME_GONE'],
+            title="Contract Gantt Timeline"
+        )
+        fig_gantt.update_yaxes(autorange="reversed")
         st.plotly_chart(fig_gantt, use_container_width=True)
 
-    # --- Top 5 Chart ---
-    df_chart = df.copy()
-    df_chart.rename(columns={'Nilai Kontrak 2023-2024': 'CONTRACT_VALUE', 'Realisasi On  2023-2024': 'REALIZATION'}, inplace=True)
-    df_chart = df_chart[df_chart['CONTRACT_VALUE'].notna() & df_chart['REALIZATION'].notna()]
-    df_chart['REMAINING'] = df_chart['CONTRACT_VALUE'] - df_chart['REALIZATION']
-    df_chart[['REALIZATION', 'REMAINING']] = df_chart[['REALIZATION', 'REMAINING']].clip(lower=0)
-    df_chart['REALIZED_PCT'] = (df_chart['REALIZATION'] / df_chart['CONTRACT_VALUE'] * 100).round(1)
-    df_chart.sort_values(by='CONTRACT_VALUE', ascending=False, inplace=True)
 
-    top5 = df_chart.head(5)
-    others = df_chart.iloc[5:]
+        import plotly.graph_objects as go
 
-    with section_card("📊 Top 5 Contracts (Realization % and Conditional Color)"):
-        st.plotly_chart(build_kpi_bar(top5, "Top 5 Contracts by Value"), use_container_width=True)
+        # --- Color Logic ---
+        def get_color(pct):
+            return '#2ECC71' if pct >= 50 else '#E74C3C'  # Green if ≥50%, Red otherwise
 
-    with section_card("📊 Remaining Contracts (Scaled View)"):
-        st.plotly_chart(build_kpi_bar(others, "Remaining Contracts by Value"), use_container_width=True)
+        # --- Build Horizontal Bar Chart with Conditional Color and %
+        def build_kpi_bar(df_subset, title):
+            fig = go.Figure()
+            for _, row in df_subset.iterrows():
+                color = get_color(row['REALIZED_PCT'])
 
+                # Realized
+                fig.add_trace(go.Bar(
+                    y=[row['KONTRAK']],
+                    x=[row['REALIZATION']],
+                    name='REALIZED',
+                    orientation='h',
+                    marker=dict(color=color),
+                    text=f"{row['REALIZED_PCT']}%",
+                    textposition='inside',
+                    hovertemplate=(
+                        f"<b>{row['KONTRAK']}</b><br>"
+                        f"Total Contract: {row['CONTRACT_VALUE']:.1f} M<br>"
+                        f"Realized: {row['REALIZATION']:.1f} M<br>"
+                        f"Remaining: {row['REMAINING']:.1f} M<br>"
+                        f"% Realized: {row['REALIZED_PCT']}%"
+                    ),
+                    showlegend=False
+                ))
+
+                # Remaining
+                fig.add_trace(go.Bar(
+                    y=[row['KONTRAK']],
+                    x=[row['REMAINING']],
+                    name='REMAINING',
+                    orientation='h',
+                    marker=dict(color='#D0D3D4'),
+                    text=f"{row['REMAINING']:.1f} M",
+                    textposition='inside',
+                    hovertemplate=(
+                        f"<b>{row['KONTRAK']}</b><br>"
+                        f"Total Contract: {row['CONTRACT_VALUE']:.1f} M<br>"
+                        f"Realized: {row['REALIZATION']:.1f} M<br>"
+                        f"Remaining: {row['REMAINING']:.1f} M<br>"
+                        f"% Realized: {row['REALIZED_PCT']}%"
+                    ),
+                    showlegend=False
+                ))
+
+            fig.update_layout(
+                barmode='stack',
+                title=title,
+                xaxis=dict(
+                    title="Contract Value (Millions)",
+                    tickformat=".0f",
+                    showgrid=True,
+                    zeroline=True,
+                    rangeslider=dict(visible=True)  # Enables zoom via slider
+                ),
+                yaxis=dict(
+                    title="Project",
+                    automargin=True
+                ),
+                height=600,
+                margin=dict(l=300, r=50, t=60, b=50),
+                dragmode=False  # Disable drag-to-zoom
+            )
+            return fig
+
+        # --- Prepare Data ---
+        df_chart = df.copy()
+        df_chart.rename(columns={
+            'Nilai Kontrak 2023-2024': 'CONTRACT_VALUE',
+            'Realisasi On  2023-2024': 'REALIZATION'
+        }, inplace=True)
+
+        df_chart = df_chart[df_chart['CONTRACT_VALUE'].notna() & df_chart['REALIZATION'].notna()].copy()
+        df_chart['REMAINING'] = df_chart['CONTRACT_VALUE'] - df_chart['REALIZATION']
+        df_chart[['REALIZATION', 'REMAINING']] = df_chart[['REALIZATION', 'REMAINING']].clip(lower=0)
+        df_chart['REALIZED_PCT'] = (df_chart['REALIZATION'] / df_chart['CONTRACT_VALUE'] * 100).round(1)
+        df_chart.sort_values(by='CONTRACT_VALUE', ascending=False, inplace=True)
+
+        # Split top 5 and others
+        top5 = df_chart.head(5)
+        others = df_chart.iloc[5:]
+
+        # --- Display in Streamlit ---
+        with section_card("📊 Top 5 Contracts (Realization % and Conditional Color)"):
+            fig_top5 = build_kpi_bar(top5, "Top 5 Contracts by Value")
+            st.plotly_chart(fig_top5, use_container_width=True, config={
+                'scrollZoom': False,  # disable scroll-to-zoom
+                'displaylogo': False,
+                'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+                'displayModeBar': 'always'
+            })
+
+        with section_card("📊 Remaining Contracts (Scaled View)"):
+            fig_others = build_kpi_bar(others, "Remaining Contracts by Value")
+            st.plotly_chart(fig_others, use_container_width=True, config={
+                'scrollZoom': False,  # disable scroll-to-zoom
+                'displaylogo': False,
+                'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+                'displayModeBar': 'always'
+            })
 
 
        
@@ -262,17 +291,15 @@ if contract_file:
 if financial_file:
     df_financial = pd.read_excel(financial_file)
     st.success("Financial progress file loaded!")
-
+    
     import plotly.graph_objects as go
+
 
     def get_color(pct):
         return '#2ECC71' if pct >= 50 else '#E74C3C'
 
     def build_kpi_bar(df_subset, title="Progress Pembayaran (%)"):
         fig = go.Figure()
-
-        show_legend_realized = True
-        show_legend_remaining = True
 
         for _, row in df_subset.iterrows():
             kontrak_name = row['Vendor']
@@ -282,11 +309,11 @@ if financial_file:
             remaining_value = row['REMAINING']
             contract_value = row['CONTRACT_VALUE']
 
-            # Bar: Realisasi (Hijau)
+            # Bar: Realisasi
             fig.add_trace(go.Bar(
                 y=[kontrak_name],
                 x=[pct],
-                name='REALIZED (%)' if show_legend_realized else None,
+                name='REALIZED (%)',
                 orientation='h',
                 marker_color=get_color(pct),
                 text=f"{pct:.1f}%",
@@ -297,15 +324,14 @@ if financial_file:
                     f"Terbayarkan: Rp {realized_value:,.0f} ({pct:.1f}%)<br>"
                     f"Sisa: Rp {remaining_value:,.0f} ({remaining_pct:.1f}%)<extra></extra>"
                 ),
-                showlegend=show_legend_realized
+                showlegend=False
             ))
-            show_legend_realized = False
 
-            # Bar: Sisa (Abu)
+            # Bar: Sisa
             fig.add_trace(go.Bar(
                 y=[kontrak_name],
                 x=[remaining_pct],
-                name='REMAINING (%)' if show_legend_remaining else None,
+                name='REMAINING (%)',
                 orientation='h',
                 marker_color="#D0D3D4",
                 text=f"{remaining_pct:.1f}%",
@@ -316,9 +342,8 @@ if financial_file:
                     f"Terbayarkan: Rp {realized_value:,.0f} ({pct:.1f}%)<br>"
                     f"Sisa: Rp {remaining_value:,.0f} ({remaining_pct:.1f}%)<extra></extra>"
                 ),
-                showlegend=show_legend_remaining
+                showlegend=False
             ))
-            show_legend_remaining = False
 
         fig.update_layout(
             barmode='stack',
@@ -327,18 +352,12 @@ if financial_file:
             yaxis=dict(title="", automargin=True),
             height=700,
             margin=dict(l=300, r=50, t=60, b=50),
-            dragmode=False,
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1
-            )
+            dragmode=False
         )
 
         return fig
 
+    
     with section_card("📊 Financial Progress Chart (from Uploaded File)"):
         fig_fin = build_kpi_bar(df_financial, "Progress Pembayaran Seluruh Kontrak")
         st.plotly_chart(fig_fin, use_container_width=True, config={
@@ -348,7 +367,118 @@ if financial_file:
             'displayModeBar': 'always'
         })
 
+   
+   
+if payment_term_file:
+        df = pd.read_excel(payment_term_file)
+        df.columns = df.columns.str.strip().str.upper()
+
+        df['START_DATE'] = pd.to_datetime(df['START_DATE'], errors='coerce')
+        df['END_DATE'] = pd.to_datetime(df['END_DATE'], errors='coerce')
+
+        # Total paid (hanya yang status Paid)
+        df_paid = df[df['STATUS'].str.upper() == 'PAID']
+        total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
+        total_paid.columns = ['VENDOR', 'TOTAL_PAID']
+
+        vendor_contract = df[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
+        vendor_summary = pd.merge(vendor_contract, total_paid, on='VENDOR', how='left')
+        vendor_summary['TOTAL_PAID'] = vendor_summary['TOTAL_PAID'].fillna(0)
+        vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
+        vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
+        vendor_summary['VENDOR_DISPLAY'] = vendor_summary['VENDOR'] + ' (' + vendor_summary['PCT_LABEL'] + ')'
+
+        # Merge ke long format
+        df_plot = pd.merge(df, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL', 'VENDOR_DISPLAY']], on='VENDOR', how='left')
+
+        # Hitung tanggal pembayaran per termin
+        df_plot['PAYMENT_DATE'] = df_plot.apply(
+            lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
+        )
+        df_plot['END_DATE'] = df_plot['PAYMENT_DATE'] + pd.DateOffset(days=25)
+
+        def assign_color(status):
+            return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
+
+        df_plot['COLOR'] = df_plot['STATUS'].apply(assign_color)
+
+        df_plot_ready = df_plot.rename(columns={
+            'VENDOR_DISPLAY': 'Project',
+            'PAYMENT_DATE': 'Start',
+            'END_DATE': 'End'
+        })
+
+        # --- Timeline ---
+        fig = px.timeline(
+            df_plot_ready,
+            x_start="Start",
+            x_end="End",
+            y="Project",
+            color="COLOR",
+            color_discrete_map="identity",
+            hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_PROGRESS"]
+        )
+
+        # Tambahkan garis "Today"
+        today = datetime.today()
+        fig.add_shape(
+            type="line",
+            x0=today,
+            x1=today,
+            y0=0,
+            y1=1,
+            xref='x',
+            yref='paper',
+            line=dict(
+                color="red",
+                width=2,
+                dash="dash"
+            )
+        )
+
+        fig.add_annotation(
+            x=today,
+            y=1.02,
+            xref="x",
+            yref="paper",
+            text="Today",
+            showarrow=False,
+            font=dict(color="red")
+        )
+
+        fig.update_yaxes(autorange="reversed")
+        fig.update_layout(
+            title="📆 Vendor Payment Progress Timeline",
+            xaxis=dict(tickformat="%b %Y", dtick="M1", rangeslider_visible=True),
+            showlegend=False,
+            height=750,
+            margin=dict(l=130, r=30, t=60, b=40),
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
+        st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
+        current_month = today.month
+        current_year = today.year
+        warning_due = df_plot[
+            (df_plot['END_DATE'].dt.month == current_month) &
+            (df_plot['END_DATE'].dt.year == current_year) &
+            (df_plot['STATUS'].str.upper() == 'PENDING')
+        ][['VENDOR', 'TERM_NO', 'AMOUNT', 'END_DATE', 'STATUS']].sort_values(by='END_DATE')
+
+        if not warning_due.empty:
+            st.dataframe(warning_due)
+        else:
+            st.success("Tidak ada termin pending yang jatuh tempo bulan ini.")
+
+        # --- Summary Tabel Vendor ---
+        st.markdown("---")
+        st.subheader("📋 Ringkasan Progress per Vendor")
+        st.dataframe(vendor_summary[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'TOTAL_PAID', 'PCT_PROGRESS']])
+
 
 
 else:
     st.info("Upload an Excel file containing the contract data.")
+ 
