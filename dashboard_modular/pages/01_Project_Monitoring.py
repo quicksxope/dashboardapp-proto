@@ -20,6 +20,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from shared import get_file
 
+
+
+
 def clean_text(x):
     if pd.isna(x):
         return ''
@@ -27,7 +30,7 @@ def clean_text(x):
     x = re.sub(r'\s+', ' ', x)
     return x.strip().upper()
 
-
+st.set_page_config(page_title="📊 PT INCA Dashboard", layout="wide")
 
 st.markdown("""
 <div style="
