@@ -94,12 +94,12 @@ def get_file(repo_path: str, label: str, key: str, branch="main"):
         uploaded_hash = get_file_hash(file_bytes)
 
         if uploaded_hash == github_hash:
-            st.sidebar.info("✅ Uploaded file sama dengan GitHub. Pakai default.")
+            st.sidebar.info("✅ Uploaded file sama dengan Database. Pakai default.")
             return github_file
 
         # Konfirmasi sebelum mengganti file GitHub
         with st.sidebar.expander("⚠️ Konfirmasi Penggantian File"):
-            st.warning("File yang diupload berbeda dari GitHub.")
+            st.warning("File yang diupload berbeda dari Database.")
             confirm = st.radio(
                 "Yakin ingin mengganti file default dengan yang ini?",
                 ["Tidak", "Ya"],
@@ -107,7 +107,7 @@ def get_file(repo_path: str, label: str, key: str, branch="main"):
             )
 
         if confirm == "Ya":
-            st.sidebar.warning("📤 Mengunggah ke GitHub...")
+            st.sidebar.warning("📤 Mengunggah ke Database...")
             success = update_file_to_github(
                 f"{repo}/contents/{file_path}",
                 file_bytes,
@@ -119,18 +119,18 @@ def get_file(repo_path: str, label: str, key: str, branch="main"):
                 st.cache_data.clear()  # ❗ Clear cache biar next fetch ambil versi baru
                 timestamp = datetime.now()
                 st.session_state[f"{key}_uploaded_at"] = timestamp
-                st.sidebar.success("✅ File berhasil diunggah ke GitHub.")
+                st.sidebar.success("✅ File Baru berhasil diunggah ke Database.")
                 st.sidebar.markdown(f"🕒 Uploaded at: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
                 return BytesIO(file_bytes)
             else:
-                st.sidebar.error("❌ Gagal upload ke GitHub. Gunakan file default.")
+                st.sidebar.error("❌ Gagal upload ke Database Gunakan file default.")
                 return github_file
         else:
-            st.sidebar.info("📥 Upload dibatalkan. Menggunakan file GitHub.")
+            st.sidebar.info("📥 Upload dibatalkan. Menggunakan file Database.")
             return github_file
 
     else:
-        st.sidebar.info("📥 Tidak ada file diupload. Menggunakan file GitHub.")
+        st.sidebar.info("📥 Tidak ada file diupload. Menggunakan file Database.")
         return github_file
 
 
