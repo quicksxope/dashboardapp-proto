@@ -68,30 +68,41 @@ def section_card(title=None):
 
 
 
-def metric_card(title, value, sub, icon="✅", theme="blue"):
+def metric_card(title, value, sub, icon="✅", theme="sky"):
     gradients = {
-        "blue": "linear-gradient(135deg, #A5D8FF, #74C0FC)",
-        "green": "linear-gradient(135deg, #B2F2BB, #69DB7C)",
-        "purple": "linear-gradient(135deg, #D0BFFF, #B197FC)",
-        "pink": "linear-gradient(135deg, #FCC2D7, #FF8787)",
-        "yellow": "linear-gradient(135deg, #FFE066, #FAB005)",
-        "gray": "linear-gradient(135deg, #DEE2E6, #ADB5BD)"
+        "sky": "linear-gradient(135deg, #e0f7fa, #b2ebf2)",
+        "mint": "linear-gradient(135deg, #e6f4ea, #b9fbc0)",
+        "lavender": "linear-gradient(135deg, #e9d8fd, #d0bfff)",
+        "peach": "linear-gradient(135deg, #ffe0b2, #ffcc80)",
+        "rose": "linear-gradient(135deg, #fce4ec, #f8bbd0)",
+        "sand": "linear-gradient(135deg, #f5f5f5, #e0e0e0)"
     }
-    background = gradients.get(theme, gradients["blue"])
-    text_color = "#1e1e1e"
-    sub_color = "#444"
-    shadow_color = "rgba(0, 0, 0, 0.15)"
-    
+
+    background = gradients.get(theme, gradients["sky"])
+    text_color = "#222"
+    sub_color = "#555"
+    shadow_color = "rgba(0, 0, 0, 0.05)"
+
     return f"""
-    <div class="metric-card" style="padding:1.5rem; background:{background}; border-radius:1.5rem;
-         box-shadow:0 6px 14px {shadow_color}; text-align:center; margin-bottom:1.5rem;
-         height:100%; width:100%; max-width:100%; transition:0.3s ease;">
-        <div style="font-size:2rem; margin-bottom:0.5rem;">{icon}</div>
-        <div style="font-size:1.1rem; font-weight:600; color:{text_color}; margin-bottom:0.3rem;">{title}</div>
-        <div style="font-size:calc(1.8rem + 0.5vw); font-weight:800; color:{text_color}; margin:0.5rem 0;">{value}</div>
-        <div style="color:{sub_color}; font-size:0.85rem;">{sub}</div>
+    <div style="
+        padding: 1.6rem;
+        background: {background};
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 12px {shadow_color};
+        text-align: center;
+        margin-bottom: 1.5rem;
+        height: 100%;
+        width: 100%;
+        transition: all 0.3s ease;
+        font-family: 'Segoe UI', sans-serif;
+    ">
+        <div style="font-size: 2rem; margin-bottom: 0.6rem;">{icon}</div>
+        <div style="font-size: 1.15rem; font-weight: 600; color: {text_color}; margin-bottom: 0.2rem;">{title}</div>
+        <div style="font-size: 2.1rem; font-weight: 800; color: {text_color}; margin: 0.4rem 0;">{value}</div>
+        <div style="color: {sub_color}; font-size: 0.9rem;">{sub}</div>
     </div>
     """
+
 
 
 
