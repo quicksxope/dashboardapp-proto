@@ -121,7 +121,7 @@ if contract_file:
         st.markdown(metric_card("Active Adendum Contracts", active_adendum_contracts, "Contracts with Adendum", "📝"), unsafe_allow_html=True)
 
     # --- Gantt Chart ---
-    with section_card("🗖️ Gantt Chart - Contract Timelines"):
+    with section_card("Contract Timelines"):
         df_sorted = df.sort_values('START')
         df_plot = df_sorted.dropna(subset=['START', 'END'])  # Only valid ones plotted
         fig_gantt = px.timeline(
@@ -225,7 +225,7 @@ if contract_file:
         others = df_chart.iloc[5:]
 
         # --- Display in Streamlit ---
-        with section_card("📊 Top 5 Contracts (Realization % and Conditional Color)"):
+        with section_card("📊 Top 5 Contracts"):
             fig_top5 = build_kpi_bar(top5, "Top 5 Contracts by Value")
             st.plotly_chart(fig_top5, use_container_width=True, config={
                 'scrollZoom': False,  # disable scroll-to-zoom
@@ -234,7 +234,7 @@ if contract_file:
                 'displayModeBar': 'always'
             })
 
-        with section_card("📊 Remaining Contracts (Scaled View)"):
+        with section_card("📊 Remaining Contracts"):
             fig_others = build_kpi_bar(others, "Remaining Contracts by Value")
             st.plotly_chart(fig_others, use_container_width=True, config={
                 'scrollZoom': False,  # disable scroll-to-zoom
@@ -348,7 +348,7 @@ if financial_file:
         return fig
 
     
-    with section_card("📊 Financial Progress Chart (from Uploaded File)"):
+    with section_card("📊 Financial Progress Chart"):
         fig_fin = build_kpi_bar(df_financial, "Progress Pembayaran Seluruh Kontrak")
         st.plotly_chart(fig_fin, use_container_width=True, config={
             'scrollZoom': False,
