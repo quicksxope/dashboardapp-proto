@@ -382,45 +382,51 @@ if financial_file:
 
    
    
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
+import plotly.graph_objects as go
+
 if payment_term_file:
         df_terms = pd.read_excel(payment_term_file)
         df_terms.columns = df_terms.columns.str.strip().str.upper()
-
+    
         df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
         df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
-
+    
         # Total paid (hanya yang status Paid)
         df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
         total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
         total_paid.columns = ['VENDOR', 'TOTAL_PAID']
-
+    
         vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
         vendor_summary = pd.merge(vendor_contract, total_paid, on='VENDOR', how='left')
         vendor_summary['TOTAL_PAID'] = vendor_summary['TOTAL_PAID'].fillna(0)
         vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
         vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
         vendor_summary['VENDOR_DISPLAY'] = vendor_summary['VENDOR'] + ' (' + vendor_summary['PCT_LABEL'] + ')'
-
+    
         # Merge ke long format
         df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL', 'VENDOR_DISPLAY']], on='VENDOR', how='left')
-
+    
         # Hitung tanggal pembayaran per termin
         df_plot['PAYMENT_DATE'] = df_plot.apply(
             lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
         )
         df_plot['END_DATE'] = df_plot['PAYMENT_DATE'] + pd.DateOffset(days=25)
-
+    
         def assign_color(status):
             return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
-
+    
         df_plot['COLOR'] = df_plot['STATUS'].apply(assign_color)
-
+    
         df_plot_ready = df_plot.rename(columns={
             'VENDOR_DISPLAY': 'Project',
             'PAYMENT_DATE': 'Start',
             'END_DATE': 'End'
         })
-
+    
         # --- Timeline ---
         fig = px.timeline(
             df_plot_ready,
@@ -431,7 +437,7 @@ if payment_term_file:
             color_discrete_map="identity",
             hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_PROGRESS"]
         )
-
+    
         # Tambahkan garis "Today"
         today = datetime.today()
         fig.add_shape(
@@ -448,7 +454,7 @@ if payment_term_file:
                 dash="dash"
             )
         )
-
+    
         fig.add_annotation(
             x=today,
             y=1.02,
@@ -458,17 +464,31 @@ if payment_term_file:
             showarrow=False,
             font=dict(color="red")
         )
-
+    
+        # Reverse Y-axis (vendor order)
         fig.update_yaxes(autorange="reversed")
+    
+        # Improve spacing on x-axis and enable scroll
         fig.update_layout(
             title="📆 Vendor Payment Progress Timeline",
-            xaxis=dict(tickformat="%b %Y", dtick="M1", rangeslider_visible=True),
+            xaxis=dict(
+                tickformat="%b %Y",
+                dtick="M1",
+                tickmode="linear",
+                tickangle=-45,
+                rangeslider_visible=True,
+                tickfont=dict(size=11)
+            ),
             showlegend=False,
             height=750,
-            margin=dict(l=130, r=30, t=60, b=40),
+            width=2200,  # Set wider width to encourage horizontal scroll
+            autosize=False,
+            margin=dict(l=130, r=30, t=60, b=60),
         )
+    
+        # Use container width = False to allow scroll
+        st.plotly_chart(fig, use_container_width=False)
 
-        st.plotly_chart(fig, use_container_width=True)
 
         # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
         st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
