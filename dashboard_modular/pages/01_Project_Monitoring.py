@@ -1364,6 +1364,22 @@ def main():
         else:
             st.info("No active tasks to recommend.")
 
+
+            
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        if st.button("✓ All Projects"):
+            selected_project = 'All Projects'
+    with col2:
+        if st.button("PROJECT 1 A"):
+            selected_project = 'PROJECT 1 A'
+    with col3:
+        if st.button("PROJECT 1 B"):
+            selected_project = 'PROJECT 1 B'
+    
+    if selected_project != 'All Projects':
+        original_df = original_df[original_df['KONTRAK'] == selected_project]
+
         # --- Project Zone Map ---
     with section_card("🗺️ Zone-Based Project Progress Map"):
         try:
