@@ -1386,6 +1386,9 @@ def main():
     if selected_project != 'All Projects':
         original_df = original_df[original_df['KONTRAK'] == selected_project]
 
+    st.write(f"Selected: {selected_project}")
+    st.write(f"Filtered rows: {len(original_df)}")
+
 
         # --- Project Zone Map ---
     with section_card("🗺️ Zone-Based Project Progress Map"):
