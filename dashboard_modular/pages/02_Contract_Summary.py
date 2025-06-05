@@ -382,11 +382,6 @@ if financial_file:
 
    
    
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-from datetime import datetime
-import plotly.graph_objects as go
 
 if payment_term_file:
         df_terms = pd.read_excel(payment_term_file)
