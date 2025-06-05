@@ -1382,7 +1382,7 @@ def main():
             cols = st.columns(len(project_options))
             for i, proj in enumerate(project_options):
                 is_active = (st.session_state.selected_project == proj)
-                label = f"✓ {proj}" if is_active else proj
+                
             
                 with cols[i]:
                     if st.button(label, key=f"btn_{proj.replace(' ', '_')}"):
