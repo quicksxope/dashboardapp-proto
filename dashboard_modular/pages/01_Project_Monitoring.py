@@ -1523,6 +1523,32 @@ def main():
                     abbrevs.append(f"{base}{abbrev_counts[base]}")
             sub_area_df['Abbrev'] = abbrevs
 
+                    
+            # Drop baris yang progress-nya kosong
+            sub_area_df = sub_area_df.dropna(subset=['Progress'])
+            
+            # Set minimal size agar bubble tetap kelihatan
+            sub_area_df['Size'] = sub_area_df['Progress'].apply(lambda p: max(p * 2, 24))
+            
+            # Generate posisi X & Y kalau belum dihitung
+            if 'X' not in sub_area_df.columns or 'Y' not in sub_area_df.columns:
+                np.random.seed(42)
+                sub_area_df = sub_area_df.sort_values('Size', ascending=False).reset_index(drop=True)
+                ranks = np.linspace(0.1, 1.0, len(sub_area_df))
+                r = np.power(ranks, 1.5)
+                theta = np.random.uniform(0, 2 * np.pi, len(sub_area_df))
+                sub_area_df['X'] = r * np.cos(theta)
+                sub_area_df['Y'] = r * np.sin(theta)
+            
+            # Drop baris yang cacat (NaN di kolom penting)
+            sub_area_df = sub_area_df.dropna(subset=['X', 'Y', 'Size', 'Progress'])
+            
+            # Stop kalau data sudah kosong
+            if sub_area_df.empty:
+                st.warning(f"Tidak ada data bubble yang bisa divisualisasikan untuk {selected_project}")
+                st.stop()
+
+
             
 
            
