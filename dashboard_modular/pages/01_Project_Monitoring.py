@@ -1455,7 +1455,7 @@ def main():
                 })
             elif 'JENIS PEKERJAAN' in filtered_df.columns:
                 st.info("No 'SUB AREA PEKERJAAN' column found. Creating sub-areas based on task descriptions.")
-                original_df['EXTRACTED_SUB_AREA'] = original_df['JENIS PEKERJAAN'].apply(
+                filtered_df['EXTRACTED_SUB_AREA'] = filtered_df['JENIS PEKERJAAN'].apply(
                     lambda x: str(x).split(' - ')[0] if ' - ' in str(x) else str(x)
                 )
                 if 'BOBOT' in filtered_df.columns:
