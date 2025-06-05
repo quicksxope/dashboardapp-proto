@@ -1,4 +1,4 @@
-<div><br class="Apple-interchange-newline">import streamlit as st
+import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -493,5 +493,4 @@ if payment_term_file:
 
 else:
     st.info("Upload an Excel file containing the contract data.")
- </div>
-
+ 
