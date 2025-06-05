@@ -1368,28 +1368,6 @@ def main():
             
     if 'selected_project' not in st.session_state:
         st.session_state.selected_project = 'All Projects'
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("✓ All Projects"):
-            st.session_state.selected_project = 'All Projects'
-    with col2:
-        if st.button("PROJECT 1 A"):
-            st.session_state.selected_project = 'PROJECT 1 A'
-    with col3:
-        if st.button("PROJECT 1 B"):
-            st.session_state.selected_project = 'PROJECT 1 B'
-    
-    selected_project = st.session_state.selected_project
-
-    st.dataframe(original_df)
-
-    # Lalu bisa lo pakai safely
-    if selected_project != 'All Projects':
-        original_df = original_df[original_df['KONTRAK'] == selected_project]
-
-    st.write(f"Selected: {selected_project}")
-    st.write(f"Filtered rows: {len(original_df)}")
 
 
         # --- Project Zone Map ---
@@ -1397,7 +1375,27 @@ def main():
         try:
             import map_zones
             import numpy as np
+            if 'selected_project' not in st.session_state:
+                st.session_state.selected_project = 'All Projects'
+
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("✓ All Projects"):
+                    st.session_state.selected_project = 'All Projects'
+            with col2:
+                if st.button("PROJECT 1 A"):
+                    st.session_state.selected_project = 'PROJECT 1 A'
+            with col3:
+                if st.button("PROJECT 1 B"):
+                    st.session_state.selected_project = 'PROJECT 1 B'
+            
+            selected_project = st.session_state.selected_project
         
+
+            # Lalu bisa lo pakai safely
+            if selected_project != 'All Projects':
+                original_df = original_df[original_df['KONTRAK'] == selected_project]
+                
 
             if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
                 st.info("No 'AREA PEKERJAAN' column found. Using task descriptions to map work areas.")
