@@ -1382,35 +1382,36 @@ def main():
             project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
             active_project = st.session_state.selected_project
             
-            # --- Style Function ---
-            def button_style(proj):
-                return f"""
-                    background: {'linear-gradient(to right, #3498db, #1abc9c)' if proj == active_project else '#ffffff'};
-                    color: {'white' if proj == active_project else '#ef4444'};
-                    border: {'none' if proj == active_project else '2px solid #ef4444'};
-                    padding: 10px 16px;
-                    border-radius: 8px;
-                    font-weight: {'bold' if proj == active_project else 'normal'};
-                    margin: 5px 0;
-                    width: 100%;
-                    display: inline-block;
-                    text-align: center;
-                    cursor: pointer;
-                """
-            
-            # --- Render as Button + Styled Div ---
+            # --- Render Stylish Buttons ---
             cols = st.columns(len(project_options))
             for i, proj in enumerate(project_options):
-                btn_key = f"btn_{proj.replace(' ', '_')}"
-                with cols[i]:
-                    if st.button(proj, key=btn_key):
-                        st.session_state.selected_project = proj
-                    st.markdown(f"<div style='{button_style(proj)}'>{'✓ ' if proj == active_project else ''}{proj}</div>", unsafe_allow_html=True)
+                is_active = proj == active_project
+                button_label = f"✓ {proj}" if is_active else proj
             
-            # --- Filtering Data ---
-            selected_project = st.session_state.selected_project
-            if selected_project != 'All Projects':
-                original_df = original_df[original_df['KONTRAK'] == selected_project]
+                # Apply custom CSS class directly in markdown
+                button_style = f"""
+                    <style>
+                    .button-custom-{i} {{
+                        background: {'linear-gradient(to right, #3498db, #1abc9c)' if is_active else 'white'};
+                        color: {'white' if is_active else '#ef4444'};
+                        border: {'none' if is_active else '2px solid #ef4444'};
+                        padding: 10px 16px;
+                        border-radius: 8px;
+                        font-weight: {'bold' if is_active else 'normal'};
+                        text-align: center;
+                        width: 100%;
+                        display: inline-block;
+                        cursor: pointer;
+                    }}
+                    </style>
+                    <div class="button-custom-{i}">{button_label}</div>
+                """
+            
+                with cols[i]:
+                    if st.button(button_label, key=f"btn_{i}"):
+                        st.session_state.selected_project = proj
+                    st.markdown(button_style, unsafe_allow_html=True)
+
 
 
 
