@@ -1434,9 +1434,9 @@ def main():
             if 'active_project_filter' in st.session_state:
                 active_filter = st.session_state.active_project_filter
                 if active_filter == 'p1a':
-                    original_df = original_df[original_df['KONTRAK'].str.upper().str.contains('1A', na=False)]
+                    original_df = original_df[original_df['KONTRAK'].str.upper().str.contains('PROJECT 1 A'', na=False)]
                 elif active_filter == 'p1b':
-                    original_df = original_df[original_df['KONTRAK'].str.upper().str.contains('1B', na=False)]
+                    original_df = original_df[original_df['KONTRAK'].str.upper().str.contains('PROJECT 1 B', na=False)]
                 # 'all' means no filtering
 
             if 'SUB AREA PEKERJAAN' in original_df.columns:
