@@ -1369,20 +1369,7 @@ def main():
     if 'selected_project' not in st.session_state:
         st.session_state.selected_project = 'All Projects'
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("✓ All Projects"):
-            st.session_state.selected_project = 'All Projects'
-    with col2:
-        if st.button("PROJECT 1 A"):
-            st.session_state.selected_project = 'PROJECT 1 A'
-    with col3:
-        if st.button("PROJECT 1 B"):
-            st.session_state.selected_project = 'PROJECT 1 B'
-    
     selected_project = st.session_state.selected_project
-
-    st.dataframe(original_df)
 
     # Lalu bisa lo pakai safely
     if selected_project != 'All Projects':
@@ -1397,6 +1384,17 @@ def main():
         try:
             import map_zones
             import numpy as np
+
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("✓ All Projects"):
+                    st.session_state.selected_project = 'All Projects'
+            with col2:
+                if st.button("PROJECT 1 A"):
+                    st.session_state.selected_project = 'PROJECT 1 A'
+            with col3:
+                if st.button("PROJECT 1 B"):
+                    st.session_state.selected_project = 'PROJECT 1 B'
         
 
             if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
@@ -1844,12 +1842,6 @@ window.addEventListener("message", function(event) {
 
 
 
-
-
-
-
-
-
             # Tampilkan 1 kolom penuh karena HTML sudah gabung chart + tabel
             # Tampilkan 1 kolom penuh karena HTML sudah gabung chart + tabel
             st.markdown("## 📊 Zone Bubble Chart")
@@ -1857,19 +1849,6 @@ window.addEventListener("message", function(event) {
             components.html(html_code, height=820)
             st.caption("🧲 Click table or bubble")
 
-
-
-
-
-            
-            
-            
-
-
-            
-            
-
-            
 
         except Exception as e:
             st.error(f"Could not display zone map: {str(e)}")
