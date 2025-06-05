@@ -482,19 +482,19 @@ if payment_term_file:
     # Use container width = False to allow scroll
     st.plotly_chart(fig, use_container_width=False)
 
-        # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
-        st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
-        current_month = today.month
-        current_year = today.year
-        warning_due = df_plot[
+    # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
+    st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
+    current_month = today.month
+    current_year = today.year
+    warning_due = df_plot[
             (df_plot['END_DATE'].dt.month == current_month) &
             (df_plot['END_DATE'].dt.year == current_year) &
             (df_plot['STATUS'].str.upper() == 'PENDING')
         ][['VENDOR', 'TERM_NO', 'AMOUNT', 'END_DATE', 'STATUS']].sort_values(by='END_DATE')
 
-        if not warning_due.empty:
+    if not warning_due.empty:
             st.dataframe(warning_due)
-        else:
+    else:
             st.success("Tidak ada termin pending yang jatuh tempo bulan ini.")
 
         # --- Summary Tabel Vendor ---
