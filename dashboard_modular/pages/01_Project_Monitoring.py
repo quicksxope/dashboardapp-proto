@@ -1373,28 +1373,30 @@ def main():
         try:
             import map_zones
             import numpy as np
-                        # --- Init Session ---
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
             
             project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
-            active_project = st.session_state.selected_project
             
             # --- Render Buttons ---
+            cols = st.columns(len(project_options))
+            for i, proj in enumerate(project_options):
+                with cols[i]:
+                    if st.button(f"{proj}", key=f"btn_{proj.replace(' ', '_')}"):
+                        st.session_state.selected_project = proj
+            
+            # ✅ Now update active state after rerun
+            active_project = st.session_state.selected_project
+            
+            # --- Render Buttons Again (with ✓)
             cols = st.columns(len(project_options))
             for i, proj in enumerate(project_options):
                 is_active = proj == active_project
                 label = f"✓ {proj}" if is_active else proj
             
                 with cols[i]:
-                    if st.button(label, key=f"btn_{proj.replace(' ', '_')}"):
-                        st.session_state.selected_project = proj
-            
-            # --- Filtering Data ---
-            selected_project = st.session_state.selected_project
-            if selected_project != 'All Projects':
-                original_df = original_df[original_df['KONTRAK'] == selected_project]
-            
+                    st.write(label)  # or st.markdown(f"<b>{label}</b>") for better style
+
                         
 
 
