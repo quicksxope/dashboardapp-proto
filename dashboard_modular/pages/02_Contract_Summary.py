@@ -479,8 +479,8 @@ if payment_term_file:
         margin=dict(l=130, r=30, t=60, b=60),
     )
 
-    # Use container width = False to allow scroll
-    st.plotly_chart(fig, use_container_width=False)
+        # Use container width = False to allow scroll
+        st.plotly_chart(fig, use_container_width=False)
 
         # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
         st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
