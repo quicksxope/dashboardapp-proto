@@ -1375,27 +1375,65 @@ def main():
         try:
             import map_zones
             import numpy as np
+            # --- Session State Init ---
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
-
+        
+            # --- Styling ---
+            active_style = """
+                background: linear-gradient(to right, #3498db, #1abc9c);
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 5px;
+                font-weight: bold;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                margin: 5px 0;
+                width: 100%;
+                text-align: center;
+            """
+            inactive_style = """
+                background: #f0f2f6;
+                color: #31333F;
+                border: 1px solid #e0e0e0;
+                padding: 8px 16px;
+                border-radius: 5px;
+                font-weight: normal;
+                margin: 5px 0;
+                width: 100%;
+                text-align: center;
+            """
+        
+            # --- Button Logic ---
             col1, col2, col3 = st.columns(3)
             with col1:
                 if st.button("✓ All Projects"):
                     st.session_state.selected_project = 'All Projects'
+                st.markdown(
+                    f"<div style='{active_style if st.session_state.selected_project == 'All Projects' else inactive_style}'>✓ All Projects</div>",
+                    unsafe_allow_html=True
+                )
+        
             with col2:
                 if st.button("PROJECT 1 A"):
                     st.session_state.selected_project = 'PROJECT 1 A'
+                st.markdown(
+                    f"<div style='{active_style if st.session_state.selected_project == 'PROJECT 1 A' else inactive_style}'>PROJECT 1 A</div>",
+                    unsafe_allow_html=True
+                )
+        
             with col3:
                 if st.button("PROJECT 1 B"):
                     st.session_state.selected_project = 'PROJECT 1 B'
-            
-            selected_project = st.session_state.selected_project
+                st.markdown(
+                    f"<div style='{active_style if st.session_state.selected_project == 'PROJECT 1 B' else inactive_style}'>PROJECT 1 B</div>",
+                    unsafe_allow_html=True
+                )
         
-
-            # Lalu bisa lo pakai safely
+            # --- Apply Filter to original_df ---
+            selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
                 original_df = original_df[original_df['KONTRAK'] == selected_project]
-                
 
             if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
                 st.info("No 'AREA PEKERJAAN' column found. Using task descriptions to map work areas.")
