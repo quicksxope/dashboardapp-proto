@@ -1381,7 +1381,9 @@ def main():
             st.session_state.selected_project = 'PROJECT 1 B'
     
     selected_project = st.session_state.selected_project
-    
+
+    st.dataframe(original_df)
+
     # Lalu bisa lo pakai safely
     if selected_project != 'All Projects':
         original_df = original_df[original_df['KONTRAK'] == selected_project]
