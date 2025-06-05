@@ -1375,60 +1375,58 @@ def main():
         try:
             import map_zones
             import numpy as np
-            # --- Init ---
-            if 'selected_project' not in st.session_state:
-                st.session_state.selected_project = 'All Projects'
-            
-            active_project = st.session_state.selected_project
-            
-            # --- Custom Style ---
-            active_style = """
-                background: linear-gradient(to right, #3498db, #1abc9c);
-                color: white;
-                border: none;
-                padding: 10px 16px;
-                border-radius: 8px;
-                font-weight: bold;
-                margin: 5px 0;
-                width: 100%;
-                text-align: center;
-            """
-            inactive_style = """
-                background: #ffffff;
-                color: #333;
-                border: 2px solid #ef4444;
-                padding: 10px 16px;
-                border-radius: 8px;
-                font-weight: normal;
-                margin: 5px 0;
-                width: 100%;
-                text-align: center;
-            """
-            
-            project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
-            style_map = {
-                proj: (active_style if proj == active_project else inactive_style)
-                for proj in project_options
-            }
-            
-            # --- Display Form Buttons with Style ---
-            with st.form("project_filter_form", clear_on_submit=True):
-                cols = st.columns(3)
-                for i, proj in enumerate(project_options):
-                    with cols[i]:
-                        st.markdown(f"<button type='submit' name='proj' value='{proj}' style='{style_map[proj]}'>{proj}</button>", unsafe_allow_html=True)
-                submitted = st.form_submit_button()
-            
-                # Set session state only on form submit
-                if submitted:
-                    proj_value = st.experimental_get_query_params().get("proj", [None])[0]
-                    if proj_value:
-                        st.session_state.selected_project = proj_value
-            
-            # --- Filter Data ---
-            selected_project = st.session_state.selected_project
-            if selected_project != 'All Projects':
-                original_df = original_df[original_df['KONTRAK'] == selected_project]
+            # --- Init state ---
+if 'selected_project' not in st.session_state:
+    st.session_state.selected_project = 'All Projects'
+
+# --- Project list ---
+project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
+clicked_project = None  # temporary tracker
+
+# --- Style templates ---
+def get_style(project):
+    if st.session_state.selected_project == project:
+        return """
+            background: linear-gradient(to right, #3498db, #1abc9c);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 5px 0;
+            width: 100%;
+            display: inline-block;
+            text-align: center;
+            cursor: pointer;
+        """
+    else:
+        return """
+            background: white;
+            color: #ef4444;
+            border: 2px solid #ef4444;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: normal;
+            margin: 5px 0;
+            width: 100%;
+            display: inline-block;
+            text-align: center;
+            cursor: pointer;
+        """
+
+# --- Render styled buttons ---
+cols = st.columns(len(project_options))
+for i, project in enumerate(project_options):
+    with cols[i]:
+        if st.button(project, key=f"btn_{project}"):
+            st.session_state.selected_project = project
+        st.markdown(f"<div style='{get_style(project)}'>{project}</div>", unsafe_allow_html=True)
+
+# --- Apply filter ---
+selected_project = st.session_state.selected_project
+if selected_project != 'All Projects':
+    original_df = original_df[original_df['KONTRAK'] == selected_project]
+
 
 
             if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
