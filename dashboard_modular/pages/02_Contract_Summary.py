@@ -461,24 +461,27 @@ if payment_term_file:
         font=dict(color="red")
     )
 
-    # Layout: horizontal label, grid per bulan, scroll horizontal
+    # Generate tickvals tiap 2 bulan
+    from pandas.tseries.offsets import MonthBegin
+    min_date = df_plot['PAYMENT_DATE'].min()
+    max_date = df_plot['END_DATE'].max()
+    tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='2MS')
+
+    # Layout
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(
         title="📆 Vendor Payment Progress Timeline",
         xaxis=dict(
+            tickvals=tickvals,
             tickformat="%b %Y",
-            dtick="M1",
-            tickmode="linear",
             tickangle=0,
-            tickfont=dict(size=13),
+            tickfont=dict(size=12),
             showgrid=True,
             gridcolor="#eeeeee",
             gridwidth=1,
             type="date"
         ),
-        yaxis=dict(
-            automargin=True
-        ),
+        yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
         width=2600,
@@ -507,6 +510,7 @@ if payment_term_file:
     st.markdown("---")
     st.subheader("📋 Ringkasan Progress per Vendor")
     st.dataframe(vendor_summary[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'TOTAL_PAID', 'PCT_PROGRESS']], use_container_width=True)
+
 
 
 
