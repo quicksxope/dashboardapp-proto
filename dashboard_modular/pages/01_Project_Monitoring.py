@@ -1365,18 +1365,7 @@ def main():
             st.info("No active tasks to recommend.")
 
 
-            
-    if 'selected_project' not in st.session_state:
-        st.session_state.selected_project = 'All Projects'
-    
-    selected_project = st.session_state.selected_project
-
-    # Lalu bisa lo pakai safely
-    if selected_project != 'All Projects':
-        original_df = original_df[original_df['KONTRAK'] == selected_project]
-
-    st.write(f"Selected: {selected_project}")
-    st.write(f"Filtered rows: {len(original_df)}")
+        
 
 
         # --- Project Zone Map ---
@@ -1385,16 +1374,41 @@ def main():
             import map_zones
             import numpy as np
 
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if st.button("✓ All Projects"):
-                    st.session_state.selected_project = 'All Projects'
-            with col2:
-                if st.button("PROJECT 1 A"):
-                    st.session_state.selected_project = 'PROJECT 1 A'
-            with col3:
-                if st.button("PROJECT 1 B"):
-                    st.session_state.selected_project = 'PROJECT 1 B'
+            if 'selected_project' not in st.session_state:
+                st.session_state.selected_project = 'All Projects'
+        
+            project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
+            selected_project = st.session_state.selected_project
+            
+            cols = st.columns(len(project_options))
+            for i, project in enumerate(project_options):
+                is_active = (project == selected_project)
+                bg_color = "#ef4444" if is_active else "#ffffff"
+                text_color = "#ffffff" if is_active else "#333333"
+                border = "2px solid #ef4444" if not is_active else "none"
+            
+                with cols[i]:
+                    if st.markdown(
+                        f"""
+                        <button style="
+                            width: 100%;
+                            padding: 0.6rem 1rem;
+                            margin-bottom: 0.5rem;
+                            background-color: {bg_color};
+                            color: {text_color};
+                            border: {border};
+                            border-radius: 8px;
+                            font-weight: 600;
+                            font-size: 0.95rem;
+                            cursor: pointer;
+                        " onclick="window.location.reload(true);">
+                            {project}
+                        </button>
+                        """, unsafe_allow_html=True
+                    ):
+                        st.session_state.selected_project = project
+            
+            selected_project = st.session_state.selected_project
         
 
             if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
