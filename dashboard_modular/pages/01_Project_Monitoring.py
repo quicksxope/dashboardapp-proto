@@ -1374,8 +1374,17 @@ def main():
             if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
                 st.info("No 'AREA PEKERJAAN' column found. Using task descriptions to map work areas.")
 
-            progress_by_zone = map_zones.extract_zone_progress(original_df)
+                        
+            filtered_df = original_df.copy()
+            if st.session_state.active_project_filter == 'p1a':
+                filtered_df = filtered_df[filtered_df['KONTRAK'] == 'PROJECT 1 A']
+            elif st.session_state.active_project_filter == 'p1b':
+                filtered_df = filtered_df[filtered_df['KONTRAK'] == 'PROJECT 1 B']
+            
+            # Proceed with zone progress using filtered data
+            progress_by_zone = map_zones.extract_zone_progress(filtered_df)
             colored_map_html = map_zones.generate_colored_map(progress_by_zone)
+
 
             map_col, legend_col = st.columns([2, 1])
 
