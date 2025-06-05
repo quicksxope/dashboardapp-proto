@@ -1366,19 +1366,26 @@ def main():
 
 
             
-    col1, col2, col3 = st.columns([1, 1, 1])
+    if 'selected_project' not in st.session_state:
+        st.session_state.selected_project = 'All Projects'
+    
+    col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("✓ All Projects"):
-            selected_project = 'All Projects'
+            st.session_state.selected_project = 'All Projects'
     with col2:
         if st.button("PROJECT 1 A"):
-            selected_project = 'PROJECT 1 A'
+            st.session_state.selected_project = 'PROJECT 1 A'
     with col3:
         if st.button("PROJECT 1 B"):
-            selected_project = 'PROJECT 1 B'
+            st.session_state.selected_project = 'PROJECT 1 B'
     
+    selected_project = st.session_state.selected_project
+    
+    # Lalu bisa lo pakai safely
     if selected_project != 'All Projects':
         original_df = original_df[original_df['KONTRAK'] == selected_project]
+
 
         # --- Project Zone Map ---
     with section_card("🗺️ Zone-Based Project Progress Map"):
