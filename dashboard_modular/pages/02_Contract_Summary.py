@@ -367,29 +367,6 @@ if financial_file:
             dragmode=False
         )
 
-        fig.update_layout(
-            title="📆 Vendor Payment Progress Timeline",
-            xaxis=dict(tickformat="%b %Y", dtick="M1", rangeslider_visible=True),
-            showlegend=False,
-            height=750,
-            margin=dict(l=130, r=30, t=60, b=40),
-        )
-
-        # Tambahkan garis vertikal pembatas per bulan (grid-style)
-        start_x = df_plot_ready['Start'].min()
-        end_x = df_plot_ready['End'].max()
-
-        monthly_ticks = pd.date_range(start=start_x, end=end_x, freq='MS')
-
-        for tick in monthly_ticks:
-            fig.add_vline(
-                x=tick,
-                line=dict(color='lightgray', width=1),
-                layer='below'
-            )
-
-        st.plotly_chart(fig, use_container_width=True)
-
         return fig
 
     
@@ -405,123 +382,92 @@ if financial_file:
    
    
 if payment_term_file:
-    df_terms = pd.read_excel(payment_term_file)
-    df_terms.columns = df_terms.columns.str.strip().str.upper()
+        df_terms = pd.read_excel(payment_term_file)
+        df_terms.columns = df_terms.columns.str.strip().str.upper()
 
-    df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
-    df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
+        df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
+        df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
-    # Hitung total paid
-    df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
-    total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
-    total_paid.columns = ['VENDOR', 'TOTAL_PAID']
+        # Total paid (hanya yang status Paid)
+        df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
+        total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
+        total_paid.columns = ['VENDOR', 'TOTAL_PAID']
 
-    # Ringkasan kontrak per vendor
-    vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
-    vendor_summary = pd.merge(vendor_contract, total_paid, on='VENDOR', how='left')
-    vendor_summary['TOTAL_PAID'] = vendor_summary['TOTAL_PAID'].fillna(0)
-    vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
-    vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
-    vendor_summary['VENDOR_DISPLAY'] = vendor_summary['VENDOR'] + ' (' + vendor_summary['PCT_LABEL'] + ')'
+        vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
+        vendor_summary = pd.merge(vendor_contract, total_paid, on='VENDOR', how='left')
+        vendor_summary['TOTAL_PAID'] = vendor_summary['TOTAL_PAID'].fillna(0)
+        vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
+        vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
+        vendor_summary['VENDOR_DISPLAY'] = vendor_summary['VENDOR'] + ' (' + vendor_summary['PCT_LABEL'] + ')'
 
-    # Gabung ke df utama
-    df_plot = pd.merge(
-        df_terms,
-        vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL', 'VENDOR_DISPLAY']],
-        on='VENDOR',
-        how='left'
-    )
+        # Merge ke long format
+        df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL', 'VENDOR_DISPLAY']], on='VENDOR', how='left')
 
-    # Hitung tanggal pembayaran & estimasi end date per termin
-    df_plot['PAYMENT_DATE'] = df_plot.apply(
-        lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
-    )
-    df_plot['END_DATE'] = df_plot['PAYMENT_DATE'] + pd.DateOffset(days=25)
+        # Hitung tanggal pembayaran per termin
+        df_plot['PAYMENT_DATE'] = df_plot.apply(
+            lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
+        )
+        df_plot['END_DATE'] = df_plot['PAYMENT_DATE'] + pd.DateOffset(days=25)
 
-    def assign_color(status):
-        return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
+        def assign_color(status):
+            return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
 
-    df_plot['COLOR'] = df_plot['STATUS'].apply(assign_color)
+        df_plot['COLOR'] = df_plot['STATUS'].apply(assign_color)
 
-    df_plot_ready = df_plot.rename(columns={
-        'VENDOR_DISPLAY': 'Project',
-        'PAYMENT_DATE': 'Start',
-        'END_DATE': 'End'
-    })
+        df_plot_ready = df_plot.rename(columns={
+            'VENDOR_DISPLAY': 'Project',
+            'PAYMENT_DATE': 'Start',
+            'END_DATE': 'End'
+        })
 
-    # --- Gantt Chart ---
-    fig = px.timeline(
-        df_plot_ready,
-        x_start="Start",
-        x_end="End",
-        y="Project",
-        color="COLOR",
-        color_discrete_map="identity",
-        hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_PROGRESS"]
-    )
-
-    # Garis hari ini
-    today = datetime.today()
-    fig.add_shape(
-        type="line",
-        x0=today,
-        x1=today,
-        y0=0,
-        y1=1,
-        xref='x',
-        yref='paper',
-        line=dict(color="red", width=2, dash="dash")
-    )
-    fig.add_annotation(
-        x=today,
-        y=1.02,
-        xref="x",
-        yref="paper",
-        text="Today",
-        showarrow=False,
-        font=dict(color="red")
-    )
-
-    # Update layout & garis grid bulanan
-    fig.update_yaxes(autorange="reversed", showgrid=True, gridcolor='rgba(200,200,200,0.3)')
-    fig.update_layout(
-        title="📆 Vendor Payment Progress Timeline",
-        xaxis=dict(tickformat="%b %Y", dtick="M1", rangeslider_visible=True),
-        showlegend=False,
-        height=750,
-        margin=dict(l=130, r=30, t=60, b=40),
-    )
-
-    # Garis grid vertikal per bulan
-    start_x = df_plot_ready['Start'].min()
-    end_x = df_plot_ready['End'].max()
-    monthly_ticks = pd.date_range(start=start_x, end=end_x, freq='MS')
-
-    for tick in monthly_ticks:
-        fig.add_vline(
-            x=tick,
-            line=dict(color='lightgray', width=1),
-            layer='below'
+        # --- Timeline ---
+        fig = px.timeline(
+            df_plot_ready,
+            x_start="Start",
+            x_end="End",
+            y="Project",
+            color="COLOR",
+            color_discrete_map="identity",
+            hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_PROGRESS"]
         )
 
-    st.plotly_chart(fig, use_container_width=True)
+        # Tambahkan garis "Today"
+        today = datetime.today()
+        fig.add_shape(
+            type="line",
+            x0=today,
+            x1=today,
+            y0=0,
+            y1=1,
+            xref='x',
+            yref='paper',
+            line=dict(
+                color="red",
+                width=2,
+                dash="dash"
+            )
+        )
 
-    # --- Termin Pending Jatuh Tempo Bulan Ini ---
-    st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
-    current_month = today.month
-    current_year = today.year
-    warning_due = df_plot[
-        (df_plot['END_DATE'].dt.month == current_month) &
-        (df_plot['END_DATE'].dt.year == current_year) &
-        (df_plot['STATUS'].str.upper() == 'PENDING')
-    ][['VENDOR', 'TERM_NO', 'AMOUNT', 'END_DATE', 'STATUS']].sort_values(by='END_DATE')
+        fig.add_annotation(
+            x=today,
+            y=1.02,
+            xref="x",
+            yref="paper",
+            text="Today",
+            showarrow=False,
+            font=dict(color="red")
+        )
 
-    if not warning_due.empty:
-        st.dataframe(warning_due)
-    else:
-        st.success("✅ Tidak ada termin pending yang jatuh tempo bulan ini.")
+        fig.update_yaxes(autorange="reversed")
+        fig.update_layout(
+            title="📆 Vendor Payment Progress Timeline",
+            xaxis=dict(tickformat="%b %Y", dtick="M1", rangeslider_visible=True),
+            showlegend=False,
+            height=750,
+            margin=dict(l=130, r=30, t=60, b=40),
+        )
 
-
+        st.plotly_chart(fig, use_container_width=True)
 
         # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
         st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
