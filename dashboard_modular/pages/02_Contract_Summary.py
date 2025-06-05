@@ -465,7 +465,7 @@ if payment_term_file:
     from pandas.tseries.offsets import MonthBegin
     min_date = df_plot['PAYMENT_DATE'].min()
     max_date = df_plot['END_DATE'].max()
-    tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='2MS')
+    tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
 
     # Layout
     fig.update_yaxes(autorange="reversed")
