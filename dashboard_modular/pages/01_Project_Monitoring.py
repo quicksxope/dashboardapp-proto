@@ -1440,31 +1440,31 @@ def main():
 
             st.markdown("<h4>Progress by Sub-Area Pekerjaan</h4>", unsafe_allow_html=True)
 
-            if 'SUB AREA PEKERJAAN' in original_df.columns:
-                if 'BOBOT' in original_df.columns:
-                    sub_area_progress = original_df.groupby('SUB AREA PEKERJAAN').apply(
+            if 'SUB AREA PEKERJAAN' in filtered_df.columns:
+                if 'BOBOT' in filtered_df.columns:
+                    sub_area_progress = filtered_df.groupby('SUB AREA PEKERJAAN').apply(
                         lambda x: (x['% COMPLETE'] * x['BOBOT']).sum() / x['BOBOT'].sum()
                         if x['BOBOT'].sum() > 0 else x['% COMPLETE'].mean()
                     )
                 else:
-                    sub_area_progress = original_df.groupby('SUB AREA PEKERJAAN')['% COMPLETE'].mean()
+                    sub_area_progress = filtered_df.groupby('SUB AREA PEKERJAAN')['% COMPLETE'].mean()
 
                 sub_area_df = pd.DataFrame({
                     'Sub Area': sub_area_progress.index,
                     'Progress': sub_area_progress.values,
                 })
-            elif 'JENIS PEKERJAAN' in original_df.columns:
+            elif 'JENIS PEKERJAAN' in filtered_df.columns:
                 st.info("No 'SUB AREA PEKERJAAN' column found. Creating sub-areas based on task descriptions.")
                 original_df['EXTRACTED_SUB_AREA'] = original_df['JENIS PEKERJAAN'].apply(
                     lambda x: str(x).split(' - ')[0] if ' - ' in str(x) else str(x)
                 )
-                if 'BOBOT' in original_df.columns:
-                    sub_area_progress = original_df.groupby('EXTRACTED_SUB_AREA').apply(
+                if 'BOBOT' in filtered_df.columns:
+                    sub_area_progress = filtered_df.groupby('EXTRACTED_SUB_AREA').apply(
                         lambda x: (x['% COMPLETE'] * x['BOBOT']).sum() / x['BOBOT'].sum()
                         if x['BOBOT'].sum() > 0 else x['% COMPLETE'].mean()
                     )
                 else:
-                    sub_area_progress = original_df.groupby('EXTRACTED_SUB_AREA')['% COMPLETE'].mean()
+                    sub_area_progress = filtered_df.groupby('EXTRACTED_SUB_AREA')['% COMPLETE'].mean()
                 sub_area_df = pd.DataFrame({
                     'Sub Area': sub_area_progress.index,
                     'Progress': sub_area_progress.values,
