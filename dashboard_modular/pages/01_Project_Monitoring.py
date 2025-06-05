@@ -1366,8 +1366,6 @@ def main():
 
 
             
-    if 'selected_project' not in st.session_state:
-        st.session_state.selected_project = 'All Projects'
 
 
         # --- Project Zone Map ---
@@ -1375,53 +1373,29 @@ def main():
         try:
             import map_zones
             import numpy as np
-            # --- Init Session ---
-            # --- Init Session ---
-            # --- Init Session ---
+                        # --- Init Session ---
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
             
             project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
             active_project = st.session_state.selected_project
             
-            # --- Button Style Function ---
-            def get_button_html(label, is_active, key):
-                return f"""
-                <button id="{key}" style="
-                    background: {'linear-gradient(to right, #3498db, #1abc9c)' if is_active else 'white'};
-                    color: {'white' if is_active else '#ef4444'};
-                    border: {'none' if is_active else '2px solid #ef4444'};
-                    padding: 10px 16px;
-                    border-radius: 8px;
-                    font-weight: {'bold' if is_active else 'normal'};
-                    margin: 5px 0;
-                    width: 100%;
-                    text-align: center;
-                    cursor: pointer;
-                ">{'✓ ' if is_active else ''}{label}</button>
-                """
-            
             # --- Render Buttons ---
             cols = st.columns(len(project_options))
             for i, proj in enumerate(project_options):
                 is_active = proj == active_project
-                btn_label = proj
-                html_id = f"proj_{i}"
+                label = f"✓ {proj}" if is_active else proj
             
                 with cols[i]:
-                    # Render styled button
-                    st.markdown(get_button_html(btn_label, is_active, html_id), unsafe_allow_html=True)
-                    # Dummy Streamlit button underneath for interaction
-                    if st.button(" ", key=f"click_{proj}"):
+                    if st.button(label, key=f"btn_{proj.replace(' ', '_')}"):
                         st.session_state.selected_project = proj
             
-            # --- Filter logic ---
+            # --- Filtering Data ---
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
                 original_df = original_df[original_df['KONTRAK'] == selected_project]
-
-
             
+                        
 
 
             if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
