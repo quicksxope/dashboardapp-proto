@@ -461,21 +461,20 @@ if payment_term_file:
         font=dict(color="red")
     )
 
-    # Generate tickvals tiap 2 bulan
+    # Tick tiap bulan, label kecil & newline
     from pandas.tseries.offsets import MonthBegin
     min_date = df_plot['PAYMENT_DATE'].min()
     max_date = df_plot['END_DATE'].max()
     tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
 
-    # Layout
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(
         title="📆 Vendor Payment Progress Timeline",
         xaxis=dict(
             tickvals=tickvals,
-            tickformat="%b %Y",
+            tickformat="%b<br>%Y",         # ⬅️ bulan & tahun baris baru
             tickangle=0,
-            tickfont=dict(size=12),
+            tickfont=dict(size=10),        # ⬅️ kecil biar muat
             showgrid=True,
             gridcolor="#eeeeee",
             gridwidth=1,
@@ -484,7 +483,7 @@ if payment_term_file:
         yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
-        width=2600,
+        width=3000,                        # ⬅️ cukup panjang agar tidak tumpuk
         autosize=False,
         margin=dict(l=180, r=50, t=70, b=80),
     )
