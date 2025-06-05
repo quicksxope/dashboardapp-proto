@@ -1373,22 +1373,21 @@ def main():
         try:
             import map_zones
             import numpy as np
+
+
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
             
             project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
             
-            # --- Render Buttons with ✓ if active ---
+            # --- Render Buttons ---
             cols = st.columns(len(project_options))
             for i, proj in enumerate(project_options):
-                is_active = (st.session_state.selected_project == proj)
-                
-            
                 with cols[i]:
-                    if st.button(label, key=f"btn_{proj.replace(' ', '_')}"):
+                    if st.button(proj, key=f"btn_{proj.replace(' ', '_')}"):
                         st.session_state.selected_project = proj
             
-            # --- Filter data ---
+            # --- Filter Data ---
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
                 original_df = original_df[original_df['KONTRAK'] == selected_project]
