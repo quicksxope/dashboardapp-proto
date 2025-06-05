@@ -521,10 +521,6 @@ if payment_term_file:
     else:
         st.success("✅ Tidak ada termin pending yang jatuh tempo bulan ini.")
 
-    # --- Ringkasan Progress Vendor ---
-    st.markdown("---")
-    st.subheader("📋 Ringkasan Progress per Vendor")
-    st.dataframe(vendor_summary[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'TOTAL_PAID', 'PCT_PROGRESS']])
 
 
         # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
