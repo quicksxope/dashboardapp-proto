@@ -367,6 +367,29 @@ if financial_file:
             dragmode=False
         )
 
+        fig.update_layout(
+            title="📆 Vendor Payment Progress Timeline",
+            xaxis=dict(tickformat="%b %Y", dtick="M1", rangeslider_visible=True),
+            showlegend=False,
+            height=750,
+            margin=dict(l=130, r=30, t=60, b=40),
+        )
+
+        # Tambahkan garis vertikal pembatas per bulan (grid-style)
+        start_x = df_plot_ready['Start'].min()
+        end_x = df_plot_ready['End'].max()
+
+        monthly_ticks = pd.date_range(start=start_x, end=end_x, freq='MS')
+
+        for tick in monthly_ticks:
+            fig.add_vline(
+                x=tick,
+                line=dict(color='lightgray', width=1),
+                layer='below'
+            )
+
+        st.plotly_chart(fig, use_container_width=True)
+
         return fig
 
     
