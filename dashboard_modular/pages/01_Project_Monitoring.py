@@ -1430,14 +1430,6 @@ def main():
                 """, unsafe_allow_html=True)
 
             st.markdown("<h4>Progress by Sub-Area Pekerjaan</h4>", unsafe_allow_html=True)
-            # === Apply Filter from Session State ===
-            if 'active_project_filter' in st.session_state:
-                active_filter = st.session_state.active_project_filter
-                if active_filter == 'p1a':
-                    original_df = original_df[original_df['KONTRAK'].str.upper().str.contains('PROJECT 1 A'', na=False)]
-                elif active_filter == 'p1b':
-                    original_df = original_df[original_df['KONTRAK'].str.upper().str.contains('PROJECT 1 B', na=False)]
-                # 'all' means no filtering
 
             if 'SUB AREA PEKERJAAN' in original_df.columns:
                 if 'BOBOT' in original_df.columns:
