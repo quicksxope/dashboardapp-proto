@@ -469,21 +469,23 @@ if payment_term_file:
         title="📆 Vendor Payment Progress Timeline",
         xaxis=dict(
             tickvals=tickvals,
-            tickformat="%b<br>%Y",
+            tickformat="%b\n%Y",
             tickangle=0,
-            tickfont=dict(size=12),
+            tickfont=dict(size=9),  # lebih kecil
             showgrid=True,
             gridcolor="#eeeeee",
             gridwidth=1,
-            type="date"
+            type="date",
+            range=[min_date - pd.DateOffset(days=20), max_date + pd.DateOffset(days=40)]
         ),
         yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
-        width=8000,  # SUPER LEBAR = spacing antar bulan makin renggang
+        width=10000,  # penting biar spacing longgar
         autosize=False,
         margin=dict(l=200, r=50, t=70, b=80),
     )
+
 
     
     st.plotly_chart(fig, use_container_width=False)
