@@ -391,32 +391,46 @@ from datetime import datetime
 from pandas.tseries.offsets import MonthBegin
 
 if payment_term_file:
+    import pandas as pd
+    import plotly.express as px
+    from datetime import datetime
+    from pandas.tseries.offsets import MonthBegin
+    import streamlit as st
+
+    # --- Load dan bersihkan ---
     df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
+    # --- Total Paid per VENDOR + CONTRACT_STATUS ---
     df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
-    total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
-    total_paid.columns = ['VENDOR', 'TOTAL_PAID']
+    total_paid = df_paid.groupby(['VENDOR', 'CONTRACT_STATUS'])['AMOUNT'].sum().reset_index()
+    total_paid.columns = ['VENDOR', 'CONTRACT_STATUS', 'TOTAL_PAID']
 
-    vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
-    vendor_summary = vendor_contract.groupby('VENDOR', as_index=False).agg({
+    # --- Total Kontrak per VENDOR + CONTRACT_STATUS ---
+    vendor_contract = df_terms[['VENDOR', 'CONTRACT_STATUS', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
+    vendor_summary = vendor_contract.groupby(['VENDOR', 'CONTRACT_STATUS'], as_index=False).agg({
         'TOTAL_CONTRACT_VALUE': 'sum',
         'START_DATE': 'min'
     })
-    vendor_summary = pd.merge(vendor_summary, total_paid, on='VENDOR', how='left')
+    vendor_summary = pd.merge(vendor_summary, total_paid, on=['VENDOR', 'CONTRACT_STATUS'], how='left')
     vendor_summary['TOTAL_PAID'] = vendor_summary['TOTAL_PAID'].fillna(0)
     vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
     vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
 
-    df_terms = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_LABEL']], on='VENDOR', how='left')
+    # --- Merge progress ke data original
+    df_terms = pd.merge(df_terms, vendor_summary[['VENDOR', 'CONTRACT_STATUS', 'PCT_PROGRESS', 'PCT_LABEL']],
+                        on=['VENDOR', 'CONTRACT_STATUS'], how='left')
+
+    # --- Display Name dengan progress
     df_terms['VENDOR_DISPLAY'] = df_terms.apply(
         lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})" if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'],
         axis=1
     )
     df_terms['VENDOR_DISPLAY'] += ' - ' + df_terms['PCT_LABEL']
 
+    # --- Hitung tanggal pembayaran
     df_terms['PAYMENT_DATE'] = df_terms.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
@@ -427,12 +441,14 @@ if payment_term_file:
         return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
     df_terms['COLOR'] = df_terms['STATUS'].apply(assign_color)
 
+    # --- Rename untuk plot
     df_plot = df_terms.rename(columns={
         'VENDOR_DISPLAY': 'Project',
         'PAYMENT_DATE': 'Start',
         'END_DATE': 'End'
     })
 
+    # --- Plot Timeline Chart
     fig = px.timeline(
         df_plot,
         x_start="Start",
