@@ -301,86 +301,6 @@ if contract_file:
 
             st.dataframe(filtered_df[['KONTRAK', 'START', 'END', 'DURATION', 'STATUS', 'PROGRESS', 'TIME_GONE']].sort_values('END'), use_container_width=True)
 
-
-if financial_file:
-    df_financial = pd.read_excel(financial_file)
-    st.success("Financial progress file loaded!")
-    
-    import plotly.graph_objects as go
-
-
-    def get_color(pct):
-        return '#2ECC71' if pct >= 50 else '#E74C3C'
-
-    def build_kpi_bar(df_subset, title="Progress Pembayaran (%)"):
-        fig = go.Figure()
-
-        for _, row in df_subset.iterrows():
-            kontrak_name = row['Vendor']
-            pct = row['REALIZED_PCT']
-            remaining_pct = 100 - pct
-            realized_value = row['REALIZATION']
-            remaining_value = row['REMAINING']
-            contract_value = row['CONTRACT_VALUE']
-
-            # Bar: Realisasi
-            fig.add_trace(go.Bar(
-                y=[kontrak_name],
-                x=[pct],
-                name='REALIZED (%)',
-                orientation='h',
-                marker_color=get_color(pct),
-                text=f"{pct:.1f}%",
-                textposition='inside',
-                hovertemplate=(
-                    f"<b>{kontrak_name}</b><br>"
-                    f"Total Kontrak: Rp {contract_value:,.0f}<br>"
-                    f"Terbayarkan: Rp {realized_value:,.0f} ({pct:.1f}%)<br>"
-                    f"Sisa: Rp {remaining_value:,.0f} ({remaining_pct:.1f}%)<extra></extra>"
-                ),
-                showlegend=False
-            ))
-
-            # Bar: Sisa
-            fig.add_trace(go.Bar(
-                y=[kontrak_name],
-                x=[remaining_pct],
-                name='REMAINING (%)',
-                orientation='h',
-                marker_color="#D0D3D4",
-                text=f"{remaining_pct:.1f}%",
-                textposition='inside',
-                hovertemplate=(
-                    f"<b>{kontrak_name}</b><br>"
-                    f"Total Kontrak: Rp {contract_value:,.0f}<br>"
-                    f"Terbayarkan: Rp {realized_value:,.0f} ({pct:.1f}%)<br>"
-                    f"Sisa: Rp {remaining_value:,.0f} ({remaining_pct:.1f}%)<extra></extra>"
-                ),
-                showlegend=False
-            ))
-
-        fig.update_layout(
-            barmode='stack',
-            title=title,
-            xaxis=dict(title="Progress (%)", range=[0, 100]),
-            yaxis=dict(title="", automargin=True),
-            height=700,
-            margin=dict(l=300, r=50, t=60, b=50),
-            dragmode=False
-        )
-
-        return fig
-
-    
-    with section_card("📊 Financial Progress Chart"):
-        fig_fin = build_kpi_bar(df_financial, "Progress Pembayaran Seluruh Kontrak")
-        st.plotly_chart(fig_fin, use_container_width=True, config={
-            'scrollZoom': False,
-            'displaylogo': False,
-            'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
-            'displayModeBar': 'always'
-        })
-
    
    
 
@@ -391,6 +311,85 @@ from datetime import datetime
 from pandas.tseries.offsets import MonthBegin
 
 if payment_term_file:
+
+    import pandas as pd
+    import plotly.graph_objects as go
+    
+    # --- Load & process data ---
+    df = pd.read_excel(payment_term_file)  # asumsi dari file upload
+    df['VENDOR'] = df['VENDOR'].str.strip()
+    df['STATUS'] = df['STATUS'].str.upper()
+    
+    contract_value_per_vendor = df.groupby('VENDOR')['TOTAL_CONTRACT_VALUE'].max()
+    paid_df = df[df['STATUS'] == 'PAID']
+    total_paid_per_vendor = paid_df.groupby('VENDOR')['AMOUNT'].sum()
+    
+    summary_df = pd.DataFrame({
+        'CONTRACT_VALUE': contract_value_per_vendor,
+        'TOTAL_PAID': total_paid_per_vendor
+    }).fillna(0)
+    
+    summary_df['REMAINING'] = summary_df['CONTRACT_VALUE'] - summary_df['TOTAL_PAID']
+    summary_df['REALIZED_PCT'] = (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE'] * 100).round(1)
+    summary_df = summary_df.reset_index()
+    
+    # --- Build chart ---
+    def get_color(pct):
+        return '#2ECC71' if pct >= 50 else '#E74C3C'
+    
+    def build_kpi_bar(df_subset, title="Progress Pembayaran (%)"):
+        fig = go.Figure()
+        for _, row in df_subset.iterrows():
+            vendor = row['VENDOR']
+            pct = row['REALIZED_PCT']
+            rem_pct = 100 - pct
+            paid = row['TOTAL_PAID']
+            rem = row['REMAINING']
+            total = row['CONTRACT_VALUE']
+    
+            fig.add_trace(go.Bar(
+                y=[vendor], x=[pct], name='REALIZED',
+                orientation='h', marker_color=get_color(pct),
+                text=f"{pct:.1f}%", textposition='inside',
+                hovertemplate=(
+                    f"<b>{vendor}</b><br>Total Kontrak: Rp {total:,.0f}<br>"
+                    f"Terbayar: Rp {paid:,.0f} ({pct:.1f}%)<br>"
+                    f"Sisa: Rp {rem:,.0f} ({rem_pct:.1f}%)<extra></extra>"
+                ), showlegend=False
+            ))
+    
+            fig.add_trace(go.Bar(
+                y=[vendor], x=[rem_pct], name='REMAINING',
+                orientation='h', marker_color="#D0D3D4",
+                text=f"{rem_pct:.1f}%", textposition='inside',
+                hovertemplate=(
+                    f"<b>{vendor}</b><br>Total Kontrak: Rp {total:,.0f}<br>"
+                    f"Terbayar: Rp {paid:,.0f} ({pct:.1f}%)<br>"
+                    f"Sisa: Rp {rem:,.0f} ({rem_pct:.1f}%)<extra></extra>"
+                ), showlegend=False
+            ))
+    
+        fig.update_layout(
+            barmode='stack',
+            title=title,
+            xaxis=dict(title="Progress (%)", range=[0, 100]),
+            yaxis=dict(title="", automargin=True),
+            height=700,
+            margin=dict(l=300, r=50, t=60, b=50),
+            dragmode=False
+        )
+        return fig
+    
+    # --- Display in Streamlit ---
+    with section_card("📊 Progress Pembayaran per Vendor"):
+        fig_vendor = build_kpi_bar(summary_df)
+        st.plotly_chart(fig_vendor, use_container_width=True, config={
+            'scrollZoom': False,
+            'displaylogo': False,
+            'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+            'displayModeBar': 'always'
+        })
+
     # --- Load dan format dasar ---
     df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
