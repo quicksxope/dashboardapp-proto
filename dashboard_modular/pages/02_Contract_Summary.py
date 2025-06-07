@@ -384,21 +384,22 @@ if financial_file:
    
    
 
-if payment_term_file:
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
 from pandas.tseries.offsets import MonthBegin
 
-    # Baca dan bersihkan
+if payment_term_file:
     df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
-    # Total paid hanya untuk yang statusnya PAID
     df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
     total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
     total_paid.columns = ['VENDOR', 'TOTAL_PAID']
 
-    # Total kontrak per vendor
     vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
     vendor_summary = vendor_contract.groupby('VENDOR', as_index=False).agg({
         'TOTAL_CONTRACT_VALUE': 'sum',
@@ -409,37 +410,29 @@ from pandas.tseries.offsets import MonthBegin
     vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
     vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
 
-    # Gabungkan progress ke df_terms
     df_terms = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_LABEL']], on='VENDOR', how='left')
-
-    # Nama Project di sumbu Y
     df_terms['VENDOR_DISPLAY'] = df_terms.apply(
         lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})" if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'],
         axis=1
     )
     df_terms['VENDOR_DISPLAY'] += ' - ' + df_terms['PCT_LABEL']
 
-    # Hitung tanggal pembayaran
     df_terms['PAYMENT_DATE'] = df_terms.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
     df_terms['PAYMENT_DATE'] = df_terms['PAYMENT_DATE'].dt.to_period('M').dt.to_timestamp()
     df_terms['END_DATE'] = df_terms['PAYMENT_DATE'] + pd.offsets.MonthEnd(0)
 
-    # Warnai berdasarkan status pembayaran
     def assign_color(status):
         return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
-
     df_terms['COLOR'] = df_terms['STATUS'].apply(assign_color)
 
-    # Rename kolom untuk plotting
     df_plot = df_terms.rename(columns={
         'VENDOR_DISPLAY': 'Project',
         'PAYMENT_DATE': 'Start',
         'END_DATE': 'End'
     })
 
-    # Build chart
     fig = px.timeline(
         df_plot,
         x_start="Start",
@@ -450,7 +443,6 @@ from pandas.tseries.offsets import MonthBegin
         hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_LABEL"]
     )
 
-    # Garis hari ini
     today = datetime.today()
     fig.add_shape(
         type="line",
@@ -472,12 +464,10 @@ from pandas.tseries.offsets import MonthBegin
         font=dict(color="red")
     )
 
-    # Buat tick bulanan
     min_date = df_plot['Start'].min()
     max_date = df_plot['End'].max()
-    tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')  # Bisa ganti '2MS' kalau mau lebih longgar
+    tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
 
-    # Update layout
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(
         title="📆 Vendor Payment Progress Timeline",
@@ -494,7 +484,7 @@ from pandas.tseries.offsets import MonthBegin
         yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
-        width=4000,  # Scrollable horizontal
+        width=4000,
         autosize=False,
         margin=dict(l=250, r=50, t=70, b=80),
     )
