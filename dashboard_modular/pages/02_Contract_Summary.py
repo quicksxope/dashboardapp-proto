@@ -494,7 +494,6 @@ if payment_term_file:
 
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
-    st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
     today = datetime.today()
     current_month = today.month
     current_year = today.year
