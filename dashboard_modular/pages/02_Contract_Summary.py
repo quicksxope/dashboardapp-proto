@@ -385,6 +385,7 @@ if financial_file:
    
 
 if payment_term_file:
+from pandas.tseries.offsets import MonthBegin
 
     # Baca dan bersihkan
     df_terms = pd.read_excel(payment_term_file)
