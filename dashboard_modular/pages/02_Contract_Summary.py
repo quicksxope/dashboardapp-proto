@@ -380,26 +380,19 @@ if financial_file:
             'displayModeBar': 'always'
         })
 
-   
-   
-from pandas.tseries.offsets import MonthBegin
 
 
-# --- Load File ---
-if payment_term_file:
-    df_terms = pd.read_excel(payment_term_file)
+def build_timeline_chart(df_terms):
     df_terms.columns = df_terms.columns.str.strip().str.upper()
 
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
-    # Vendor Display Name
     df_terms['VENDOR_DISPLAY'] = df_terms.apply(
         lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})"
         if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'], axis=1
     )
 
-    # Total Paid per Vendor
     df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
     total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
     total_paid.columns = ['VENDOR', 'TOTAL_PAID']
@@ -414,10 +407,8 @@ if payment_term_file:
     vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
     vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
 
-    # Merge to Data
     df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL']], on='VENDOR', how='left')
 
-    # Payment Date per Termin
     df_plot['PAYMENT_DATE'] = df_plot.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
@@ -434,7 +425,6 @@ if payment_term_file:
         'END_DATE': 'End'
     })
 
-    # --- Generate Chart ---
     fig = px.timeline(
         df_plot_ready,
         x_start="Start",
@@ -445,7 +435,7 @@ if payment_term_file:
         hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_PROGRESS"]
     )
 
-    # Add "Today" line
+    # Add Today
     today = datetime.today()
     fig.add_shape(
         type="line",
@@ -467,12 +457,12 @@ if payment_term_file:
         font=dict(color="red")
     )
 
-    # === CUSTOM GRID SPACING ===
+    # Custom grid spacing
     min_date = df_plot['PAYMENT_DATE'].min()
     max_date = df_plot['END_DATE'].max()
     tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
 
-    spacing_per_month = 80  # px per month
+    spacing_per_month = 80
     n_months = len(tickvals)
     chart_width = n_months * spacing_per_month
 
@@ -502,14 +492,20 @@ if payment_term_file:
 
     return fig
 
-    with section_card("📆 Vendor Payment Progress Timeline"):
-    st.plotly_chart(fig, use_container_width=False, config={
-        'scrollZoom': False,
-        'displaylogo': False,
-        'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
-        'displayModeBar': 'always'
-    })
 
+
+if payment_term_file:
+    df_terms = pd.read_excel(payment_term_file)
+
+    fig_timeline = build_timeline_chart(df_terms)
+
+    with section_card("📆 Vendor Payment Progress Timeline"):
+        st.plotly_chart(fig_timeline, use_container_width=False, config={
+            'scrollZoom': False,
+            'displaylogo': False,
+            'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+            'displayModeBar': 'always'
+        })
 
 
 
