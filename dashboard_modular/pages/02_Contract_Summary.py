@@ -1,6 +1,5 @@
 
 
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -385,62 +384,71 @@ if financial_file:
    
    
 
-if payment_term_file:
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
 from pandas.tseries.offsets import MonthBegin
 
-    # Baca dan bersihkan
+if payment_term_file:
+    import pandas as pd
+    import plotly.express as px
+    from datetime import datetime
+    from pandas.tseries.offsets import MonthBegin
+    import streamlit as st
+
+    # --- Load dan bersihkan ---
     df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
-    # Total paid hanya untuk yang statusnya PAID
+    # --- Total Paid per VENDOR + CONTRACT_STATUS ---
     df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
-    total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
-    total_paid.columns = ['VENDOR', 'TOTAL_PAID']
+    total_paid = df_paid.groupby(['VENDOR', 'CONTRACT_STATUS'])['AMOUNT'].sum().reset_index()
+    total_paid.columns = ['VENDOR', 'CONTRACT_STATUS', 'TOTAL_PAID']
 
-    # Total kontrak per vendor
-    vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
-    vendor_summary = vendor_contract.groupby('VENDOR', as_index=False).agg({
+    # --- Total Kontrak per VENDOR + CONTRACT_STATUS ---
+    vendor_contract = df_terms[['VENDOR', 'CONTRACT_STATUS', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
+    vendor_summary = vendor_contract.groupby(['VENDOR', 'CONTRACT_STATUS'], as_index=False).agg({
         'TOTAL_CONTRACT_VALUE': 'sum',
         'START_DATE': 'min'
     })
-    vendor_summary = pd.merge(vendor_summary, total_paid, on='VENDOR', how='left')
+    vendor_summary = pd.merge(vendor_summary, total_paid, on=['VENDOR', 'CONTRACT_STATUS'], how='left')
     vendor_summary['TOTAL_PAID'] = vendor_summary['TOTAL_PAID'].fillna(0)
     vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
     vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
 
-    # Gabungkan progress ke df_terms
-    df_terms = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_LABEL']], on='VENDOR', how='left')
+    # --- Merge progress ke data original
+    df_terms = pd.merge(df_terms, vendor_summary[['VENDOR', 'CONTRACT_STATUS', 'PCT_PROGRESS', 'PCT_LABEL']],
+                        on=['VENDOR', 'CONTRACT_STATUS'], how='left')
 
-    # Nama Project di sumbu Y
+    # --- Display Name dengan progress
     df_terms['VENDOR_DISPLAY'] = df_terms.apply(
         lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})" if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'],
         axis=1
     )
     df_terms['VENDOR_DISPLAY'] += ' - ' + df_terms['PCT_LABEL']
 
-    # Hitung tanggal pembayaran
+    # --- Hitung tanggal pembayaran
     df_terms['PAYMENT_DATE'] = df_terms.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
     df_terms['PAYMENT_DATE'] = df_terms['PAYMENT_DATE'].dt.to_period('M').dt.to_timestamp()
     df_terms['END_DATE'] = df_terms['PAYMENT_DATE'] + pd.offsets.MonthEnd(0)
 
-    # Warnai berdasarkan status pembayaran
     def assign_color(status):
         return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
-
     df_terms['COLOR'] = df_terms['STATUS'].apply(assign_color)
 
-    # Rename kolom untuk plotting
+    # --- Rename untuk plot
     df_plot = df_terms.rename(columns={
         'VENDOR_DISPLAY': 'Project',
         'PAYMENT_DATE': 'Start',
         'END_DATE': 'End'
     })
 
-    # Build chart
+    # --- Plot Timeline Chart
     fig = px.timeline(
         df_plot,
         x_start="Start",
@@ -451,7 +459,6 @@ from pandas.tseries.offsets import MonthBegin
         hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_LABEL"]
     )
 
-    # Garis hari ini
     today = datetime.today()
     fig.add_shape(
         type="line",
@@ -473,12 +480,10 @@ from pandas.tseries.offsets import MonthBegin
         font=dict(color="red")
     )
 
-    # Buat tick bulanan
     min_date = df_plot['Start'].min()
     max_date = df_plot['End'].max()
-    tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')  # Bisa ganti '2MS' kalau mau lebih longgar
+    tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
 
-    # Update layout
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(
         title="📆 Vendor Payment Progress Timeline",
@@ -495,7 +500,7 @@ from pandas.tseries.offsets import MonthBegin
         yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
-        width=4000,  # Scrollable horizontal
+        width=4000,
         autosize=False,
         margin=dict(l=250, r=50, t=70, b=80),
     )
@@ -505,24 +510,58 @@ from pandas.tseries.offsets import MonthBegin
 
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
-    st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
+    today = datetime.today()
     current_month = today.month
     current_year = today.year
+    
+    # --- Format data: rupiah & tanggal ---
+    def format_rupiah(x):
+        return f"Rp {x:,.0f}"
+    
+    def format_date(x):
+        return x.strftime('%d %b %Y') if pd.notna(x) else '-'
+    
+    # --- TABEL 1: Warning Termin Pending yang Jatuh Tempo Bulan Ini ---
+    st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
+    
     warning_due = df_plot[
-        (df_plot['END_DATE'].dt.month == current_month) &
-        (df_plot['END_DATE'].dt.year == current_year) &
+        (df_plot['End'].dt.month == current_month) &
+        (df_plot['End'].dt.year == current_year) &
         (df_plot['STATUS'].str.upper() == 'PENDING')
-    ][['VENDOR', 'TERM_NO', 'AMOUNT', 'END_DATE', 'STATUS']].sort_values(by='END_DATE')
-
+    ].copy()
+    
     if not warning_due.empty:
-        st.dataframe(warning_due, use_container_width=True)
+        warning_due['End'] = warning_due['End'].apply(format_date)
+        warning_due['AMOUNT'] = warning_due['AMOUNT'].apply(format_rupiah)
+        st.dataframe(
+            warning_due[['VENDOR', 'TERM_NO', 'AMOUNT', 'End', 'STATUS']]
+            .sort_values(by='End'),
+            use_container_width=True
+        )
     else:
         st.success("Tidak ada termin pending yang jatuh tempo bulan ini.")
-
-    # --- Summary Tabel Vendor ---
+    
     st.markdown("---")
-    st.subheader("📋 Ringkasan Progress per Vendor")
-    st.dataframe(vendor_summary[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'TOTAL_PAID', 'PCT_PROGRESS']], use_container_width=True)
+    
+    # --- TABEL 2: Late Payment (Pending Tapi Sudah Lewat Jatuh Tempo) ---
+    st.subheader("❌ Termin Pending yang Lewat Jatuh Tempo")
+    
+    late_payment = df_plot[
+        (df_plot['End'] < today) &
+        (df_plot['STATUS'].str.upper() == 'PENDING')
+    ].copy()
+    
+    if not late_payment.empty:
+        late_payment['End'] = late_payment['End'].apply(format_date)
+        late_payment['AMOUNT'] = late_payment['AMOUNT'].apply(format_rupiah)
+        st.dataframe(
+            late_payment[['VENDOR', 'TERM_NO', 'AMOUNT', 'End', 'STATUS']]
+            .sort_values(by='End'),
+            use_container_width=True
+        )
+    else:
+        st.success("Tidak ada termin pending yang lewat jatuh tempo.")
+
 
 
 
