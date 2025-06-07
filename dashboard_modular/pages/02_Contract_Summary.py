@@ -391,77 +391,48 @@ from datetime import datetime
 from pandas.tseries.offsets import MonthBegin
 
 if payment_term_file:
-    # --- Load dan format dasar ---
     df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
-    # --- Filter Paid Terms ---
-    df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID'].copy()
+    df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
+    total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
+    total_paid.columns = ['VENDOR', 'TOTAL_PAID']
 
-    # --- Bagi 2: ada contract status & tidak ---
-    with_status = df_terms[df_terms['CONTRACT_STATUS'].notna()].copy()
-    without_status = df_terms[df_terms['CONTRACT_STATUS'].isna()].copy()
+    vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
+    vendor_summary = vendor_contract.groupby('VENDOR', as_index=False).agg({
+        'TOTAL_CONTRACT_VALUE': 'sum',
+        'START_DATE': 'min'
+    })
+    vendor_summary = pd.merge(vendor_summary, total_paid, on='VENDOR', how='left')
+    vendor_summary['TOTAL_PAID'] = vendor_summary['TOTAL_PAID'].fillna(0)
+    vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
+    vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
 
-    # === 1) Yang ADA CONTRACT_STATUS ===
-    paid_with_status = df_paid[df_paid['CONTRACT_STATUS'].notna()]
-    total_paid_status = paid_with_status.groupby(['VENDOR', 'CONTRACT_STATUS'])['AMOUNT'].sum().reset_index()
-    contract_status = with_status[['VENDOR', 'CONTRACT_STATUS', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
-    summary_status = contract_status.merge(total_paid_status, on=['VENDOR', 'CONTRACT_STATUS'], how='left')
-    summary_status['TOTAL_PAID'] = summary_status['AMOUNT'].fillna(0)
-    summary_status.drop(columns='AMOUNT', inplace=True)
-    summary_status['PCT_PROGRESS'] = (summary_status['TOTAL_PAID'] / summary_status['TOTAL_CONTRACT_VALUE']) * 100
-    summary_status['PCT_LABEL'] = summary_status['PCT_PROGRESS'].round(1).astype(str) + '%'
+    df_terms = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_LABEL']], on='VENDOR', how='left')
+    df_terms['VENDOR_DISPLAY'] = df_terms.apply(
+        lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})" if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'],
+        axis=1
+    )
+    df_terms['VENDOR_DISPLAY'] += ' - ' + df_terms['PCT_LABEL']
 
-    # === 2) Yang TIDAK ADA CONTRACT_STATUS ===
-    paid_without_status = df_paid[df_paid['CONTRACT_STATUS'].isna()]
-    total_paid_vendor = paid_without_status.groupby('VENDOR')['AMOUNT'].sum().reset_index()
-    contract_vendor = without_status[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
-    summary_vendor = contract_vendor.merge(total_paid_vendor, on='VENDOR', how='left')
-    summary_vendor['TOTAL_PAID'] = summary_vendor['AMOUNT'].fillna(0)
-    summary_vendor['CONTRACT_STATUS'] = None
-    summary_vendor.drop(columns='AMOUNT', inplace=True)
-    summary_vendor['PCT_PROGRESS'] = (summary_vendor['TOTAL_PAID'] / summary_vendor['TOTAL_CONTRACT_VALUE']) * 100
-    summary_vendor['PCT_LABEL'] = summary_vendor['PCT_PROGRESS'].round(1).astype(str) + '%'
-
-    # === Gabungkan semua summary ===
-    vendor_summary = pd.concat([summary_status, summary_vendor], ignore_index=True)
-
-    # --- Merge ke data utama ---
-    df_terms = pd.merge(df_terms, vendor_summary[['VENDOR', 'CONTRACT_STATUS', 'PCT_PROGRESS', 'PCT_LABEL']],
-                        on=['VENDOR', 'CONTRACT_STATUS'], how='left')
-
-    # --- Label untuk sumbu Y (display project name + status + progress) ---
-    def generate_display_name(row):
-        if pd.notna(row['CONTRACT_STATUS']):
-            return f"{row['VENDOR']} ({row['CONTRACT_STATUS']}) - {row['PCT_LABEL']}"
-        else:
-            return f"{row['VENDOR']} - {row['PCT_LABEL']}"
-
-    df_terms['VENDOR_DISPLAY'] = df_terms.apply(generate_display_name, axis=1)
-
-    # --- Hitung tanggal pembayaran ---
     df_terms['PAYMENT_DATE'] = df_terms.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
     df_terms['PAYMENT_DATE'] = df_terms['PAYMENT_DATE'].dt.to_period('M').dt.to_timestamp()
     df_terms['END_DATE'] = df_terms['PAYMENT_DATE'] + pd.offsets.MonthEnd(0)
 
-    # --- Assign warna status ---
     def assign_color(status):
         return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
-
     df_terms['COLOR'] = df_terms['STATUS'].apply(assign_color)
 
-    # --- Rename untuk plot ---
     df_plot = df_terms.rename(columns={
         'VENDOR_DISPLAY': 'Project',
         'PAYMENT_DATE': 'Start',
         'END_DATE': 'End'
     })
 
-    # --- Buat chart ---
     fig = px.timeline(
         df_plot,
         x_start="Start",
@@ -472,7 +443,6 @@ if payment_term_file:
         hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_LABEL"]
     )
 
-    # --- Garis hari ini ---
     today = datetime.today()
     fig.add_shape(
         type="line",
@@ -494,7 +464,6 @@ if payment_term_file:
         font=dict(color="red")
     )
 
-    # --- Setup Tick Bulanan ---
     min_date = df_plot['Start'].min()
     max_date = df_plot['End'].max()
     tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
@@ -521,7 +490,6 @@ if payment_term_file:
     )
 
     st.plotly_chart(fig, use_container_width=False)
-
 
 
 
