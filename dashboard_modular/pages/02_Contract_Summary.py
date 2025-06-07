@@ -24,12 +24,6 @@ contract_file = get_file(
     "contract_file"
 )
 
-financial_file = get_file(
-    "quicksxope/dashboardapp-proto/contents/data/financial_progress.xlsx",
-    "📁 Upload Financial Data",
-    "financial_file"
-)
-
 payment_term_file = get_file(
     "quicksxope/dashboardapp-proto/contents/data/Long_Format_Payment_Terms.xlsx",
     "📁 Upload Payment Data",
