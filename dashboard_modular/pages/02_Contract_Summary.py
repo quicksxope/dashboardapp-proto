@@ -500,7 +500,16 @@ if payment_term_file:
         margin=dict(l=200, r=50, t=70, b=80),
     )
 
-    st.plotly_chart(fig, use_container_width=False)
+    return fig
+
+    with section_card("📆 Vendor Payment Progress Timeline"):
+    st.plotly_chart(fig, use_container_width=False, config={
+        'scrollZoom': False,
+        'displaylogo': False,
+        'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+        'displayModeBar': 'always'
+    })
+
 
 
 
