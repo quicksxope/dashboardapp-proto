@@ -390,22 +390,32 @@ if payment_term_file:
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
-    # Total paid (hanya yang status Paid)
+    # Display name: vendor (contract status) kalau ada
+    df_terms['VENDOR_DISPLAY'] = df_terms.apply(
+        lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})" 
+        if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'], axis=1
+    )
+
+    # Total paid (group by vendor utama saja)
     df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
     total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
     total_paid.columns = ['VENDOR', 'TOTAL_PAID']
 
+    # Kontrak per vendor utama
     vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
-    vendor_summary = pd.merge(vendor_contract, total_paid, on='VENDOR', how='left')
+    vendor_summary = vendor_contract.groupby('VENDOR', as_index=False).agg({
+        'TOTAL_CONTRACT_VALUE': 'sum',
+        'START_DATE': 'min'
+    })
+    vendor_summary = pd.merge(vendor_summary, total_paid, on='VENDOR', how='left')
     vendor_summary['TOTAL_PAID'] = vendor_summary['TOTAL_PAID'].fillna(0)
     vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
     vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
-    vendor_summary['VENDOR_DISPLAY'] = vendor_summary['VENDOR'] + ' (' + vendor_summary['PCT_LABEL'] + ')'
 
-    # Merge ke long format
-    df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL', 'VENDOR_DISPLAY']], on='VENDOR', how='left')
+    # Merge ke original (by vendor saja)
+    df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL']], on='VENDOR', how='left')
 
-    # Tanggal pembayaran fix ke awal dan akhir bulan
+    # Generate tanggal pembayaran
     df_plot['PAYMENT_DATE'] = df_plot.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
@@ -435,6 +445,7 @@ if payment_term_file:
     )
 
     # Tambahkan garis "Today"
+    from datetime import datetime
     today = datetime.today()
     fig.add_shape(
         type="line",
@@ -461,7 +472,7 @@ if payment_term_file:
         font=dict(color="red")
     )
 
-    # Tick tiap bulan, label kecil & newline
+    # Format tick bulanan
     from pandas.tseries.offsets import MonthBegin
     min_date = df_plot['PAYMENT_DATE'].min()
     max_date = df_plot['END_DATE'].max()
@@ -472,9 +483,9 @@ if payment_term_file:
         title="📆 Vendor Payment Progress Timeline",
         xaxis=dict(
             tickvals=tickvals,
-            tickformat="%b<br>%Y",         # ⬅️ bulan & tahun baris baru
+            tickformat="%b<br>%Y",
             tickangle=0,
-            tickfont=dict(size=10),        # ⬅️ kecil biar muat
+            tickfont=dict(size=10),
             showgrid=True,
             gridcolor="#eeeeee",
             gridwidth=1,
@@ -483,12 +494,13 @@ if payment_term_file:
         yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
-        width=3000,                        # ⬅️ cukup panjang agar tidak tumpuk
+        width=3000,
         autosize=False,
-        margin=dict(l=180, r=50, t=70, b=80),
+        margin=dict(l=200, r=50, t=70, b=80),
     )
 
     st.plotly_chart(fig, use_container_width=False)
+
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
     st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
