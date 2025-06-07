@@ -376,7 +376,7 @@ if payment_term_file:
         return fig
     
     # --- Display in Streamlit ---
-    with section_card("📊 Progress Pembayaran per Vendor"):
+    with section_card("📊 Vendor Financial Progress"):
         fig_vendor = build_kpi_bar(summary_df)
         st.plotly_chart(fig_vendor, use_container_width=True, config={
             'scrollZoom': False,
