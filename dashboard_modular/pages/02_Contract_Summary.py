@@ -30,7 +30,7 @@ financial_file = get_file(
 )
 
 payment_term_file = get_file(
-    "quicksxope/dashboardapp-proto/contents/data/payment_terms_new.xlsx",
+    "quicksxope/dashboardapp-proto/contents/data/Long_Format_Payment_Terms.xlsx",
     "📁 Upload Payment Data",
     "payment_terms_new"
 )
