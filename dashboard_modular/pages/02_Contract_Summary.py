@@ -314,7 +314,8 @@ if payment_term_file:
     df['VENDOR'] = df['VENDOR'].str.strip()
     df['STATUS'] = df['STATUS'].str.upper()
     
-    contract_value_per_vendor = df.groupby('VENDOR')['TOTAL_CONTRACT_VALUE'].sum()
+    contract_base = df[['VENDOR', 'START_DATE', 'END_DATE', 'TOTAL_CONTRACT_VALUE']].drop_duplicates()
+    contract_value_per_vendor = contract_base.groupby('VENDOR')['TOTAL_CONTRACT_VALUE'].sum()
     paid_df = df[df['STATUS'] == 'PAID']
     total_paid_per_vendor = paid_df.groupby('VENDOR')['AMOUNT'].sum()
     
