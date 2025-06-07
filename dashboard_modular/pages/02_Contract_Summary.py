@@ -488,7 +488,7 @@ if payment_term_file:
             tickvals=tickvals,
             tickformat="%b<br>%Y",
             tickangle=0,
-            tickfont=dict(size=10),
+            tickfont=dict(size=7),
             showgrid=True,
             gridcolor="#eeeeee",
             gridwidth=1,
@@ -502,7 +502,7 @@ if payment_term_file:
         margin=dict(l=200, r=50, t=70, b=80),
     )
 
-    import streamlit as st
+    
     st.plotly_chart(fig, use_container_width=False)
 
 
