@@ -28,6 +28,15 @@ contract_file = get_file(
 )
 
 
+# --- Load Payment Term Data ---
+payment_term_file = get_file(
+    "quicksxope/dashboardapp-proto/contents/data/Long_Format_Payment_Terms.xlsx",
+    "💵 Upload Payment Term File",
+    "payment_term_file"
+)
+
+
+
 st.markdown("""
 <div style="
     background: linear-gradient(to right, #3498db, #2ecc71);
@@ -246,5 +255,92 @@ if contract_file:
         total_value=total_value,
         remaining=remaining
     )
+
+
+if payment_term_file:
+    df_terms = pd.read_excel(payment_term_file)
+    df_terms.columns = df_terms.columns.str.strip().str.upper()
+    df_terms['STATUS'] = df_terms['STATUS'].str.upper()
+    df_terms['VENDOR'] = df_terms['VENDOR'].str.strip()
+
+    df_paid = df_terms[df_terms['STATUS'] == 'PAID']
+    total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum()
+
+    unique_contracts = df_terms[['VENDOR', 'START_DATE', 'END_DATE', 'TOTAL_CONTRACT_VALUE']].drop_duplicates()
+    total_contract = unique_contracts.groupby('VENDOR')['TOTAL_CONTRACT_VALUE'].sum()
+
+    summary_df = pd.DataFrame({
+        'CONTRACT_VALUE': total_contract,
+        'TOTAL_PAID': total_paid
+    }).fillna(0)
+
+    summary_df['REMAINING'] = summary_df['CONTRACT_VALUE'] - summary_df['TOTAL_PAID']
+    summary_df['REALIZED_PCT'] = (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE'] * 100).round(1).fillna(0)
+    summary_df_reset = summary_df.reset_index().rename(columns={"index": "VENDOR"})
+
+    total_paid_amt = summary_df['TOTAL_PAID'].sum()
+    total_contract_amt = summary_df['CONTRACT_VALUE'].sum()
+    total_remaining_amt = total_contract_amt - total_paid_amt
+    pending_count = df_terms[df_terms['STATUS'] == 'PENDING'].shape[0]
+
+    st.subheader("💰 Payment Progress Summary")
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        render_card("Total Paid", f"Rp {total_paid_amt:,.0f}", "", "#dcfce7", "💸")
+    with col2:
+        render_card("Remaining", f"Rp {total_remaining_amt:,.0f}", "", "#fde68a", "🕐")
+    with col3:
+        render_card("Vendor Count", summary_df.shape[0], "Unique vendors", "#e0f2fe", "🏢")
+    with col4:
+        render_card("Pending Terms", pending_count, "Termin belum dibayar", "#fef2f2", "⚠️")
+
+    render_card_with_donut(
+        title="Payment Realization",
+        value=f"Rp {total_paid_amt:,.0f}",
+        subtext="Based on paid vs contract value",
+        labels=["Paid", "Remaining"],
+        values=[total_paid_amt, total_remaining_amt],
+        colors=["#10b981", "#fcd34d"],
+        icon="💰",
+        total_value=total_contract_amt,
+        remaining=total_remaining_amt
+    )
+
+    def build_kpi_bar(df_subset, title="Progress Pembayaran per Vendor (%)"):
+        fig = go.Figure()
+        for _, row in df_subset.iterrows():
+            vendor = row['VENDOR']
+            pct = row['REALIZED_PCT']
+            remaining_pct = 100 - pct
+            paid = row['TOTAL_PAID']
+            remaining = row['REMAINING']
+            total = row['CONTRACT_VALUE']
+
+            fig.add_trace(go.Bar(
+                y=[vendor], x=[pct], orientation='h',
+                marker_color="#10b981" if pct >= 50 else "#f87171",
+                text=f"{pct:.1f}%", textposition='inside', showlegend=False,
+                hovertemplate=f"<b>{vendor}</b><br>Total: Rp {total:,.0f}<br>Paid: Rp {paid:,.0f} ({pct:.1f}%)<br>Remaining: Rp {remaining:,.0f} ({remaining_pct:.1f}%)<extra></extra>"
+            ))
+
+            fig.add_trace(go.Bar(
+                y=[vendor], x=[remaining_pct], orientation='h',
+                marker_color="#e5e7eb", text=f"{remaining_pct:.1f}%",
+                textposition='inside', showlegend=False,
+                hovertemplate=f"<b>{vendor}</b><br>Total: Rp {total:,.0f}<br>Paid: Rp {paid:,.0f} ({pct:.1f}%)<br>Remaining: Rp {remaining:,.0f} ({remaining_pct:.1f}%)<extra></extra>"
+            ))
+
+        fig.update_layout(
+            barmode='stack', height=700,
+            margin=dict(l=300, r=50, t=60, b=50),
+            title=title,
+            xaxis=dict(title="Progress (%)", range=[0, 100]),
+            yaxis=dict(title="", automargin=True),
+            plot_bgcolor='white', paper_bgcolor='white'
+        )
+        return fig
+
+    with st.expander("📉 Vendor Payment Progress Details", expanded=False):
+        st.plotly_chart(build_kpi_bar(summary_df_reset), use_container_width=True)
 else:
     st.info("Please upload both Project and Contract Excel files.")
