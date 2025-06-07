@@ -495,23 +495,58 @@ if payment_term_file:
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
     st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
+    today = datetime.today()
     current_month = today.month
     current_year = today.year
+    
+    # --- Format data: rupiah & tanggal ---
+    def format_rupiah(x):
+        return f"Rp {x:,.0f}"
+    
+    def format_date(x):
+        return x.strftime('%d %b %Y') if pd.notna(x) else '-'
+    
+    # --- TABEL 1: Warning Termin Pending yang Jatuh Tempo Bulan Ini ---
+    st.subheader("⚠️ Termin Pending yang Jatuh Tempo Bulan Ini")
+    
     warning_due = df_plot[
-        (df_plot['END_DATE'].dt.month == current_month) &
-        (df_plot['END_DATE'].dt.year == current_year) &
+        (df_plot['End'].dt.month == current_month) &
+        (df_plot['End'].dt.year == current_year) &
         (df_plot['STATUS'].str.upper() == 'PENDING')
-    ][['VENDOR', 'TERM_NO', 'AMOUNT', 'END_DATE', 'STATUS']].sort_values(by='END_DATE')
-
+    ].copy()
+    
     if not warning_due.empty:
-        st.dataframe(warning_due, use_container_width=True)
+        warning_due['End'] = warning_due['End'].apply(format_date)
+        warning_due['AMOUNT'] = warning_due['AMOUNT'].apply(format_rupiah)
+        st.dataframe(
+            warning_due[['VENDOR', 'TERM_NO', 'AMOUNT', 'End', 'STATUS']]
+            .sort_values(by='End'),
+            use_container_width=True
+        )
     else:
         st.success("Tidak ada termin pending yang jatuh tempo bulan ini.")
-
-    # --- Summary Tabel Vendor ---
+    
     st.markdown("---")
-    st.subheader("📋 Ringkasan Progress per Vendor")
-    st.dataframe(vendor_summary[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'TOTAL_PAID', 'PCT_PROGRESS']], use_container_width=True)
+    
+    # --- TABEL 2: Late Payment (Pending Tapi Sudah Lewat Jatuh Tempo) ---
+    st.subheader("❌ Termin Pending yang Lewat Jatuh Tempo")
+    
+    late_payment = df_plot[
+        (df_plot['End'] < today) &
+        (df_plot['STATUS'].str.upper() == 'PENDING')
+    ].copy()
+    
+    if not late_payment.empty:
+        late_payment['End'] = late_payment['End'].apply(format_date)
+        late_payment['AMOUNT'] = late_payment['AMOUNT'].apply(format_rupiah)
+        st.dataframe(
+            late_payment[['VENDOR', 'TERM_NO', 'AMOUNT', 'End', 'STATUS']]
+            .sort_values(by='End'),
+            use_container_width=True
+        )
+    else:
+        st.success("Tidak ada termin pending yang lewat jatuh tempo.")
+
 
 
 
