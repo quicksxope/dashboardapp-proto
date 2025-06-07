@@ -384,7 +384,6 @@ if financial_file:
    
 from pandas.tseries.offsets import MonthBegin
 
-# Load file
 if payment_term_file:
     df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
@@ -392,18 +391,16 @@ if payment_term_file:
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
-    # Display name gabung vendor + contract status jika ada
+    # Tambahkan label vendor + status
     df_terms['VENDOR_DISPLAY'] = df_terms.apply(
         lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})"
         if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'], axis=1
     )
 
-    # Hitung total paid per vendor utama
     df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
     total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
     total_paid.columns = ['VENDOR', 'TOTAL_PAID']
 
-    # Ambil nilai kontrak unik dan agregat jika multi kontrak
     vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
     vendor_summary = vendor_contract.groupby('VENDOR', as_index=False).agg({
         'TOTAL_CONTRACT_VALUE': 'sum',
@@ -414,30 +411,24 @@ if payment_term_file:
     vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
     vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
 
-    # Gabungkan ke original
     df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL']], on='VENDOR', how='left')
 
-    # Hitung tanggal pembayaran berdasarkan termin
     df_plot['PAYMENT_DATE'] = df_plot.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
     df_plot['PAYMENT_DATE'] = df_plot['PAYMENT_DATE'].dt.to_period('M').dt.to_timestamp()
     df_plot['END_DATE'] = df_plot['PAYMENT_DATE'] + pd.offsets.MonthEnd(0)
 
-    # Warnai status
-    def assign_color(status):
-        return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
+    df_plot['COLOR'] = df_plot['STATUS'].apply(
+        lambda status: '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
+    )
 
-    df_plot['COLOR'] = df_plot['STATUS'].apply(assign_color)
-
-    # Rename untuk chart
     df_plot_ready = df_plot.rename(columns={
         'VENDOR_DISPLAY': 'Project',
         'PAYMENT_DATE': 'Start',
         'END_DATE': 'End'
     })
 
-    # Buat timeline chart
     fig = px.timeline(
         df_plot_ready,
         x_start="Start",
@@ -448,7 +439,6 @@ if payment_term_file:
         hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_PROGRESS"]
     )
 
-    # Tambah garis "Today"
     today = datetime.today()
     fig.add_shape(
         type="line",
@@ -470,7 +460,6 @@ if payment_term_file:
         font=dict(color="red")
     )
 
-    # Set grid spacing bulan
     min_date = df_plot['PAYMENT_DATE'].min()
     max_date = df_plot['END_DATE'].max()
     tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
@@ -479,30 +468,26 @@ if payment_term_file:
     fig.update_layout(
         title="📆 Vendor Payment Progress Timeline",
         xaxis=dict(
+            tickvals=tickvals,
             tickformat="%b<br>%Y",
             tickangle=0,
-            tickfont=dict(size=10),
+            tickfont=dict(size=12),
             showgrid=True,
             gridcolor="#eeeeee",
             gridwidth=1,
-            type="date",
-            tick0=min_date,
-            dtick="M1",
-            range=[
-                min_date - pd.DateOffset(days=15),
-                max_date + pd.DateOffset(days=60)
-            ]
+            type="date"
         ),
         yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
-        width=4000,  # lebar besar biar grid longgar
+        width=8000,  # SUPER LEBAR = spacing antar bulan makin renggang
         autosize=False,
         margin=dict(l=200, r=50, t=70, b=80),
     )
 
     
     st.plotly_chart(fig, use_container_width=False)
+
 
 
 
