@@ -384,6 +384,8 @@ if financial_file:
    
 from pandas.tseries.offsets import MonthBegin
 
+
+# --- Load File ---
 if payment_term_file:
     df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
@@ -391,12 +393,13 @@ if payment_term_file:
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
-    # Tambahkan label vendor + status
+    # Vendor Display Name
     df_terms['VENDOR_DISPLAY'] = df_terms.apply(
         lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})"
         if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'], axis=1
     )
 
+    # Total Paid per Vendor
     df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
     total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
     total_paid.columns = ['VENDOR', 'TOTAL_PAID']
@@ -411,8 +414,10 @@ if payment_term_file:
     vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
     vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
 
+    # Merge to Data
     df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL']], on='VENDOR', how='left')
 
+    # Payment Date per Termin
     df_plot['PAYMENT_DATE'] = df_plot.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
@@ -429,6 +434,7 @@ if payment_term_file:
         'END_DATE': 'End'
     })
 
+    # --- Generate Chart ---
     fig = px.timeline(
         df_plot_ready,
         x_start="Start",
@@ -439,6 +445,7 @@ if payment_term_file:
         hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_PROGRESS"]
     )
 
+    # Add "Today" line
     today = datetime.today()
     fig.add_shape(
         type="line",
@@ -460,35 +467,41 @@ if payment_term_file:
         font=dict(color="red")
     )
 
+    # === CUSTOM GRID SPACING ===
     min_date = df_plot['PAYMENT_DATE'].min()
     max_date = df_plot['END_DATE'].max()
     tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
 
-    fig.update_yaxes(autorange="reversed")
+    spacing_per_month = 80  # px per month
+    n_months = len(tickvals)
+    chart_width = n_months * spacing_per_month
+
     fig.update_layout(
         title="📆 Vendor Payment Progress Timeline",
         xaxis=dict(
             tickvals=tickvals,
             tickformat="%b\n%Y",
             tickangle=0,
-            tickfont=dict(size=9),  # lebih kecil
+            tickfont=dict(size=9),
             showgrid=True,
             gridcolor="#eeeeee",
             gridwidth=1,
             type="date",
-            range=[min_date - pd.DateOffset(days=20), max_date + pd.DateOffset(days=40)]
+            range=[
+                min_date - pd.DateOffset(days=20),
+                max_date + pd.DateOffset(days=40)
+            ]
         ),
         yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
-        width=10000,  # penting biar spacing longgar
+        width=chart_width,
         autosize=False,
         margin=dict(l=200, r=50, t=70, b=80),
     )
 
-
-    
     st.plotly_chart(fig, use_container_width=False)
+
 
 
 
