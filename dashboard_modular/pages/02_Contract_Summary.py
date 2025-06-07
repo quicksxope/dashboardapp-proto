@@ -392,7 +392,7 @@ if payment_term_file:
 
     # Display name: vendor (contract status) kalau ada
     df_terms['VENDOR_DISPLAY'] = df_terms.apply(
-        lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})" 
+        lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})"
         if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'], axis=1
     )
 
@@ -401,7 +401,7 @@ if payment_term_file:
     total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
     total_paid.columns = ['VENDOR', 'TOTAL_PAID']
 
-    # Kontrak per vendor utama
+    # Total kontrak per vendor utama
     vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
     vendor_summary = vendor_contract.groupby('VENDOR', as_index=False).agg({
         'TOTAL_CONTRACT_VALUE': 'sum',
@@ -412,10 +412,10 @@ if payment_term_file:
     vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
     vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
 
-    # Merge ke original (by vendor saja)
+    # Merge progress ke data original
     df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL']], on='VENDOR', how='left')
 
-    # Generate tanggal pembayaran
+    # Tanggal pembayaran per termin
     df_plot['PAYMENT_DATE'] = df_plot.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
@@ -427,13 +427,15 @@ if payment_term_file:
 
     df_plot['COLOR'] = df_plot['STATUS'].apply(assign_color)
 
+    # Rename for plotting
     df_plot_ready = df_plot.rename(columns={
         'VENDOR_DISPLAY': 'Project',
         'PAYMENT_DATE': 'Start',
         'END_DATE': 'End'
     })
 
-    # --- Timeline ---
+    # Buat timeline chart
+    import plotly.express as px
     fig = px.timeline(
         df_plot_ready,
         x_start="Start",
@@ -444,7 +446,7 @@ if payment_term_file:
         hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_PROGRESS"]
     )
 
-    # Tambahkan garis "Today"
+    # Tambahkan garis hari ini
     from datetime import datetime
     today = datetime.today()
     fig.add_shape(
@@ -472,7 +474,7 @@ if payment_term_file:
         font=dict(color="red")
     )
 
-    # Format tick bulanan
+    # Buat tick bulanan
     from pandas.tseries.offsets import MonthBegin
     min_date = df_plot['PAYMENT_DATE'].min()
     max_date = df_plot['END_DATE'].max()
@@ -494,13 +496,13 @@ if payment_term_file:
         yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
-        width=3000,
+        width=4000,  # LEBAR ditambah
         autosize=False,
         margin=dict(l=200, r=50, t=70, b=80),
     )
 
-    st.plotly_chart(fig, use_container_width=True)
-    fig.update_layout(width=None)  # optional, biar auto width
+    import streamlit as st
+    st.plotly_chart(fig, use_container_width=False)
 
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
