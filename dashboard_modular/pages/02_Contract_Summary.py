@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -380,23 +381,28 @@ if financial_file:
             'displayModeBar': 'always'
         })
 
+   
+   
 
-
-def build_timeline_chart(df_terms):
+if payment_term_file:
+    df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
 
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
+    # Display name: vendor (contract status) kalau ada
     df_terms['VENDOR_DISPLAY'] = df_terms.apply(
         lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']})"
         if pd.notna(row['CONTRACT_STATUS']) else row['VENDOR'], axis=1
     )
 
+    # Total paid (group by vendor utama saja)
     df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID']
     total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum().reset_index()
     total_paid.columns = ['VENDOR', 'TOTAL_PAID']
 
+    # Total kontrak per vendor utama
     vendor_contract = df_terms[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
     vendor_summary = vendor_contract.groupby('VENDOR', as_index=False).agg({
         'TOTAL_CONTRACT_VALUE': 'sum',
@@ -407,24 +413,30 @@ def build_timeline_chart(df_terms):
     vendor_summary['PCT_PROGRESS'] = (vendor_summary['TOTAL_PAID'] / vendor_summary['TOTAL_CONTRACT_VALUE']) * 100
     vendor_summary['PCT_LABEL'] = vendor_summary['PCT_PROGRESS'].round(1).astype(str) + '%'
 
+    # Merge progress ke data original
     df_plot = pd.merge(df_terms, vendor_summary[['VENDOR', 'PCT_PROGRESS', 'PCT_LABEL']], on='VENDOR', how='left')
 
+    # Tanggal pembayaran per termin
     df_plot['PAYMENT_DATE'] = df_plot.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
     df_plot['PAYMENT_DATE'] = df_plot['PAYMENT_DATE'].dt.to_period('M').dt.to_timestamp()
     df_plot['END_DATE'] = df_plot['PAYMENT_DATE'] + pd.offsets.MonthEnd(0)
 
-    df_plot['COLOR'] = df_plot['STATUS'].apply(
-        lambda status: '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
-    )
+    def assign_color(status):
+        return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
 
+    df_plot['COLOR'] = df_plot['STATUS'].apply(assign_color)
+
+    # Rename for plotting
     df_plot_ready = df_plot.rename(columns={
         'VENDOR_DISPLAY': 'Project',
         'PAYMENT_DATE': 'Start',
         'END_DATE': 'End'
     })
 
+    # Buat timeline chart
+    import plotly.express as px
     fig = px.timeline(
         df_plot_ready,
         x_start="Start",
@@ -435,7 +447,8 @@ def build_timeline_chart(df_terms):
         hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_PROGRESS"]
     )
 
-    # Add Today
+    # Tambahkan garis hari ini
+    from datetime import datetime
     today = datetime.today()
     fig.add_shape(
         type="line",
@@ -445,8 +458,13 @@ def build_timeline_chart(df_terms):
         y1=1,
         xref='x',
         yref='paper',
-        line=dict(color="red", width=2, dash="dash")
+        line=dict(
+            color="red",
+            width=2,
+            dash="dash"
+        )
     )
+
     fig.add_annotation(
         x=today,
         y=1.02,
@@ -457,58 +475,35 @@ def build_timeline_chart(df_terms):
         font=dict(color="red")
     )
 
-    # Custom grid spacing
+    # Buat tick bulanan
+    from pandas.tseries.offsets import MonthBegin
     min_date = df_plot['PAYMENT_DATE'].min()
     max_date = df_plot['END_DATE'].max()
     tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
 
-    spacing_per_month = 80
-    n_months = len(tickvals)
-    chart_width = n_months * spacing_per_month
-
+    fig.update_yaxes(autorange="reversed")
     fig.update_layout(
         title="📆 Vendor Payment Progress Timeline",
         xaxis=dict(
             tickvals=tickvals,
-            tickformat="%b\n%Y",
+            tickformat="%b<br>%Y",
             tickangle=0,
-            tickfont=dict(size=9),
+            tickfont=dict(size=10),
             showgrid=True,
             gridcolor="#eeeeee",
             gridwidth=1,
-            type="date",
-            range=[
-                min_date - pd.DateOffset(days=20),
-                max_date + pd.DateOffset(days=40)
-            ]
+            type="date"
         ),
         yaxis=dict(automargin=True),
         showlegend=False,
         height=800,
-        width=chart_width,
+        width=4000,  # LEBAR ditambah
         autosize=False,
         margin=dict(l=200, r=50, t=70, b=80),
     )
 
-    return fig
-
-
-
-if payment_term_file:
-    df_terms = pd.read_excel(payment_term_file)
-
-    fig_timeline = build_timeline_chart(df_terms)
-
-    with section_card("📆 Vendor Payment Progress Timeline"):
-        st.plotly_chart(fig_timeline, use_container_width=False, config={
-            'scrollZoom': False,
-            'displaylogo': False,
-            'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
-            'displayModeBar': 'always'
-        })
-
-
-
+    import streamlit as st
+    st.plotly_chart(fig, use_container_width=False)
 
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
