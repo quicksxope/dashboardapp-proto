@@ -308,24 +308,42 @@ if payment_term_file:
 
     import pandas as pd
     import plotly.graph_objects as go
-    
+
     # --- Load & process data ---
-    df = pd.read_excel(payment_term_file)  # asumsi dari file upload
+    df = pd.read_excel(payment_term_file)
+    df.columns = df.columns.str.strip().str.upper()
     df['VENDOR'] = df['VENDOR'].str.strip()
     df['STATUS'] = df['STATUS'].str.upper()
-    
+
+    # 🔥 CLEANING: Remove commas and convert to numeric
+    df['AMOUNT'] = df['AMOUNT'].astype(str).str.replace(',', '', regex=False)
+    df['TOTAL_CONTRACT_VALUE'] = df['TOTAL_CONTRACT_VALUE'].astype(str).str.replace(',', '', regex=False)
+    df['AMOUNT'] = pd.to_numeric(df['AMOUNT'], errors='coerce').fillna(0)
+    df['TOTAL_CONTRACT_VALUE'] = pd.to_numeric(df['TOTAL_CONTRACT_VALUE'], errors='coerce').fillna(0)
+
+    # --- Summarize per vendor ---
     contract_base = df[['VENDOR', 'START_DATE', 'END_DATE', 'TOTAL_CONTRACT_VALUE']].drop_duplicates()
     contract_value_per_vendor = contract_base.groupby('VENDOR')['TOTAL_CONTRACT_VALUE'].sum()
+
     paid_df = df[df['STATUS'] == 'PAID']
     total_paid_per_vendor = paid_df.groupby('VENDOR')['AMOUNT'].sum()
-    
+
     summary_df = pd.DataFrame({
         'CONTRACT_VALUE': contract_value_per_vendor,
         'TOTAL_PAID': total_paid_per_vendor
     }).fillna(0)
-    
+
     summary_df['REMAINING'] = summary_df['CONTRACT_VALUE'] - summary_df['TOTAL_PAID']
-    summary_df['REALIZED_PCT'] = (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE'] * 100).round(1)
+
+    # ⛔️ Avoid division by zero using np.where
+    import numpy as np
+    summary_df['REALIZED_PCT'] = np.where(
+        summary_df['CONTRACT_VALUE'] == 0,
+        0,
+        (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE']) * 100
+    )
+    summary_df['REALIZED_PCT'] = summary_df['REALIZED_PCT'].round(1)
+
     summary_df = summary_df.reset_index()
     
     # --- Build chart ---
