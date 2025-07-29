@@ -572,8 +572,14 @@ if payment_term_file:
     ].copy()
     
     if not warning_due.empty:
+        # Bersihin dan konversi AMOUNT
+        warning_due['AMOUNT'] = warning_due['AMOUNT'].astype(str).str.replace(',', '', regex=False)
+        warning_due['AMOUNT'] = pd.to_numeric(warning_due['AMOUNT'], errors='coerce').fillna(0)
+    
+        # Format tanggal dan rupiah
         warning_due['End'] = warning_due['End'].apply(format_date)
         warning_due['AMOUNT'] = warning_due['AMOUNT'].apply(format_rupiah)
+    
         st.dataframe(
             warning_due[['VENDOR', 'TERM_NO', 'AMOUNT', 'End', 'STATUS']]
             .sort_values(by='End'),
@@ -593,8 +599,14 @@ if payment_term_file:
     ].copy()
     
     if not late_payment.empty:
+        # Bersihin dan konversi AMOUNT
+        late_payment['AMOUNT'] = late_payment['AMOUNT'].astype(str).str.replace(',', '', regex=False)
+        late_payment['AMOUNT'] = pd.to_numeric(late_payment['AMOUNT'], errors='coerce').fillna(0)
+    
+        # Format tanggal dan rupiah
         late_payment['End'] = late_payment['End'].apply(format_date)
         late_payment['AMOUNT'] = late_payment['AMOUNT'].apply(format_rupiah)
+    
         st.dataframe(
             late_payment[['VENDOR', 'TERM_NO', 'AMOUNT', 'End', 'STATUS']]
             .sort_values(by='End'),
@@ -602,8 +614,9 @@ if payment_term_file:
         )
     else:
         st.success("Tidak ada termin pending yang lewat jatuh tempo.")
-
-
+    
+    
+    
 
 
 
