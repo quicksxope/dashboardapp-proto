@@ -421,21 +421,34 @@ if payment_term_file:
     total_paid_status = paid_with_status.groupby(['VENDOR', 'CONTRACT_STATUS'])['AMOUNT'].sum().reset_index()
     contract_status = with_status[['VENDOR', 'CONTRACT_STATUS', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
     summary_status = contract_status.merge(total_paid_status, on=['VENDOR', 'CONTRACT_STATUS'], how='left')
-    summary_status['TOTAL_PAID'] = summary_status['AMOUNT'].fillna(0)
+    summary_status['TOTAL_PAID'] = pd.to_numeric(summary_status['AMOUNT'], errors='coerce').fillna(0)
+    summary_status['TOTAL_CONTRACT_VALUE'] = pd.to_numeric(summary_status['TOTAL_CONTRACT_VALUE'], errors='coerce').fillna(0)
     summary_status.drop(columns='AMOUNT', inplace=True)
-    summary_status['PCT_PROGRESS'] = (summary_status['TOTAL_PAID'] / summary_status['TOTAL_CONTRACT_VALUE']) * 100
+    
+    summary_status['PCT_PROGRESS'] = np.where(
+        summary_status['TOTAL_CONTRACT_VALUE'] == 0,
+        0,
+        (summary_status['TOTAL_PAID'] / summary_status['TOTAL_CONTRACT_VALUE']) * 100
+    )
     summary_status['PCT_LABEL'] = summary_status['PCT_PROGRESS'].round(1).astype(str) + '%'
+
 
     # === 2) Yang TIDAK ADA CONTRACT_STATUS ===
     paid_without_status = df_paid[df_paid['CONTRACT_STATUS'].isna()]
     total_paid_vendor = paid_without_status.groupby('VENDOR')['AMOUNT'].sum().reset_index()
     contract_vendor = without_status[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
     summary_vendor = contract_vendor.merge(total_paid_vendor, on='VENDOR', how='left')
-    summary_vendor['TOTAL_PAID'] = summary_vendor['AMOUNT'].fillna(0)
+    summary_vendor['TOTAL_PAID'] = pd.to_numeric(summary_vendor['AMOUNT'], errors='coerce').fillna(0)
+    summary_vendor['TOTAL_CONTRACT_VALUE'] = pd.to_numeric(summary_vendor['TOTAL_CONTRACT_VALUE'], errors='coerce').fillna(0)
     summary_vendor['CONTRACT_STATUS'] = None
     summary_vendor.drop(columns='AMOUNT', inplace=True)
-    summary_vendor['PCT_PROGRESS'] = (summary_vendor['TOTAL_PAID'] / summary_vendor['TOTAL_CONTRACT_VALUE']) * 100
-    summary_vendor['PCT_LABEL'] = summary_vendor['PCT_PROGRESS'].round(1).astype(str) + '%'
+
+summary_vendor['PCT_PROGRESS'] = np.where(
+    summary_vendor['TOTAL_CONTRACT_VALUE'] == 0,
+    0,
+    (summary_vendor['TOTAL_PAID'] / summary_vendor['TOTAL_CONTRACT_VALUE']) * 100
+)
+summary_vendor['PCT_LABEL'] = summary_vendor['PCT_PROGRESS'].round(1).astype(str) + '%'
 
     # === Gabungkan semua summary ===
     vendor_summary = pd.concat([summary_status, summary_vendor], ignore_index=True)
