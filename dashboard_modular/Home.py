@@ -266,6 +266,13 @@ if payment_term_file:
     df_terms['STATUS'] = df_terms['STATUS'].str.upper()
     df_terms['VENDOR'] = df_terms['VENDOR'].str.strip()
 
+    # 🔥 FIX untuk koma di AMOUNT & CONTRACT VALUE
+    df_terms['AMOUNT'] = df_terms['AMOUNT'].str.replace(',', '', regex=False)
+    df_terms['TOTAL_CONTRACT_VALUE'] = df_terms['TOTAL_CONTRACT_VALUE'].str.replace(',', '', regex=False)
+
+    df_terms['AMOUNT'] = pd.to_numeric(df_terms['AMOUNT'], errors='coerce').fillna(0)
+    df_terms['TOTAL_CONTRACT_VALUE'] = pd.to_numeric(df_terms['TOTAL_CONTRACT_VALUE'], errors='coerce').fillna(0)
+
     # Total paid per vendor (hanya yang sudah PAID)
     df_paid = df_terms[df_terms['STATUS'] == 'PAID']
     total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum()
