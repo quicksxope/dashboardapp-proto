@@ -443,12 +443,12 @@ if payment_term_file:
     summary_vendor['CONTRACT_STATUS'] = None
     summary_vendor.drop(columns='AMOUNT', inplace=True)
 
-summary_vendor['PCT_PROGRESS'] = np.where(
-    summary_vendor['TOTAL_CONTRACT_VALUE'] == 0,
-    0,
-    (summary_vendor['TOTAL_PAID'] / summary_vendor['TOTAL_CONTRACT_VALUE']) * 100
-)
-summary_vendor['PCT_LABEL'] = summary_vendor['PCT_PROGRESS'].round(1).astype(str) + '%'
+    summary_vendor['PCT_PROGRESS'] = np.where(
+        summary_vendor['TOTAL_CONTRACT_VALUE'] == 0,
+        0,
+        (summary_vendor['TOTAL_PAID'] / summary_vendor['TOTAL_CONTRACT_VALUE']) * 100
+    )
+    summary_vendor['PCT_LABEL'] = summary_vendor['PCT_PROGRESS'].round(1).astype(str) + '%'
 
     # === Gabungkan semua summary ===
     vendor_summary = pd.concat([summary_status, summary_vendor], ignore_index=True)
