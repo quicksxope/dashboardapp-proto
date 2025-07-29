@@ -7,6 +7,7 @@ from io import BytesIO
 import hashlib
 from datetime import datetime
 import requests
+import numpy as np
 
 
 st.set_page_config(page_title="Dashboard Home", layout="wide")
