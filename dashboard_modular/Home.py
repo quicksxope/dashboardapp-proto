@@ -256,36 +256,54 @@ if contract_file:
         remaining=remaining
     )
 
+
+
+
 if payment_term_file:
     df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
     df_terms['STATUS'] = df_terms['STATUS'].str.upper()
     df_terms['VENDOR'] = df_terms['VENDOR'].str.strip()
 
+    # Total paid per vendor (hanya yang sudah PAID)
     df_paid = df_terms[df_terms['STATUS'] == 'PAID']
     total_paid = df_paid.groupby('VENDOR')['AMOUNT'].sum()
 
+    # Total contract per vendor (ambil yang unik saja)
     unique_contracts = df_terms[['VENDOR', 'START_DATE', 'END_DATE', 'TOTAL_CONTRACT_VALUE']].drop_duplicates()
     total_contract = unique_contracts.groupby('VENDOR')['TOTAL_CONTRACT_VALUE'].sum()
 
-    # ✅ JOIN dan handle NaN serta konversi tipe
+    # Gabungkan keduanya
     summary_df = total_contract.to_frame(name='CONTRACT_VALUE').join(
         total_paid.to_frame(name='TOTAL_PAID'),
         how='outer'
     )
 
+    # Konversi ke numerik dan isi NaN jadi 0
     summary_df['CONTRACT_VALUE'] = pd.to_numeric(summary_df['CONTRACT_VALUE'], errors='coerce').fillna(0)
     summary_df['TOTAL_PAID'] = pd.to_numeric(summary_df['TOTAL_PAID'], errors='coerce').fillna(0)
 
+    # Kalkulasi remaining
     summary_df['REMAINING'] = summary_df['CONTRACT_VALUE'] - summary_df['TOTAL_PAID']
-    summary_df['REALIZED_PCT'] = (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE'].replace(0, pd.NA) * 100).round(1).fillna(0)
+
+    # Kalkulasi % realisasi (hindari divide by 0)
+    summary_df['REALIZED_PCT'] = np.where(
+        summary_df['CONTRACT_VALUE'] == 0,
+        0,
+        (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE']) * 100
+    )
+    summary_df['REALIZED_PCT'] = summary_df['REALIZED_PCT'].round(1)
+
+    # Reset index supaya VENDOR jadi kolom
     summary_df_reset = summary_df.reset_index()
 
+    # Summary total
     total_paid_amt = summary_df['TOTAL_PAID'].sum()
     total_contract_amt = summary_df['CONTRACT_VALUE'].sum()
     total_remaining_amt = total_contract_amt - total_paid_amt
     pending_count = df_terms[df_terms['STATUS'] == 'PENDING'].shape[0]
 
+    # Card & donut
     st.subheader("💰 Payment Progress Summary")
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -309,6 +327,7 @@ if payment_term_file:
         remaining=total_remaining_amt
     )
 
+    # KPI bar chart
     def build_kpi_bar(df_subset, title="Progress Pembayaran per Vendor (%)"):
         fig = go.Figure()
         for _, row in df_subset.iterrows():
@@ -345,6 +364,7 @@ if payment_term_file:
 
     with st.expander("📉 Vendor Payment Progress Details", expanded=False):
         st.plotly_chart(build_kpi_bar(summary_df_reset), use_container_width=True)
+
 
 
 else:
