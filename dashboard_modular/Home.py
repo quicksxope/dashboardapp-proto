@@ -256,7 +256,6 @@ if contract_file:
         remaining=remaining
     )
 
-
 if payment_term_file:
     df_terms = pd.read_excel(payment_term_file)
     df_terms.columns = df_terms.columns.str.strip().str.upper()
@@ -269,14 +268,18 @@ if payment_term_file:
     unique_contracts = df_terms[['VENDOR', 'START_DATE', 'END_DATE', 'TOTAL_CONTRACT_VALUE']].drop_duplicates()
     total_contract = unique_contracts.groupby('VENDOR')['TOTAL_CONTRACT_VALUE'].sum()
 
-    summary_df = pd.DataFrame({
-        'CONTRACT_VALUE': total_contract,
-        'TOTAL_PAID': total_paid
-    }).fillna(0)
+    # ✅ JOIN dan handle NaN serta konversi tipe
+    summary_df = total_contract.to_frame(name='CONTRACT_VALUE').join(
+        total_paid.to_frame(name='TOTAL_PAID'),
+        how='outer'
+    )
+
+    summary_df['CONTRACT_VALUE'] = pd.to_numeric(summary_df['CONTRACT_VALUE'], errors='coerce').fillna(0)
+    summary_df['TOTAL_PAID'] = pd.to_numeric(summary_df['TOTAL_PAID'], errors='coerce').fillna(0)
 
     summary_df['REMAINING'] = summary_df['CONTRACT_VALUE'] - summary_df['TOTAL_PAID']
-    summary_df['REALIZED_PCT'] = (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE'] * 100).round(1).fillna(0)
-    summary_df_reset = summary_df.reset_index().rename(columns={"index": "VENDOR"})
+    summary_df['REALIZED_PCT'] = (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE'].replace(0, pd.NA) * 100).round(1).fillna(0)
+    summary_df_reset = summary_df.reset_index()
 
     total_paid_amt = summary_df['TOTAL_PAID'].sum()
     total_contract_amt = summary_df['CONTRACT_VALUE'].sum()
@@ -342,5 +345,7 @@ if payment_term_file:
 
     with st.expander("📉 Vendor Payment Progress Details", expanded=False):
         st.plotly_chart(build_kpi_bar(summary_df_reset), use_container_width=True)
+
+
 else:
     st.info("Please upload both Project and Contract Excel files.")
