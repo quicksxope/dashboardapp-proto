@@ -1582,7 +1582,8 @@ def main():
             # Generate JSON-like structure for JS
             bubbles_json = bubble_data.to_dict(orient='records')
 
-            html_code = '''
+           
+html_code = '''
 <html>
 <head>
 <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -1593,7 +1594,7 @@ def main():
 
   <!-- BUBBLE CHART AREA -->
   <div style="flex: 3; position: relative;">
-    <svg viewBox="0 0 1200 900" width="100%" height="800" preserveAspectRatio="xMidYMid meet"></svg>
+    <svg viewBox="0 0 1800 1200" width="100%" height="1000" preserveAspectRatio="xMidYMid meet"></svg>
 
     <!-- Panel Info -->
     <div id="info-panel"
@@ -1631,7 +1632,7 @@ def main():
   </div>
 
   <!-- LEGEND TABLE -->
-  <div style="flex: 1; padding: 16px; overflow-y: auto; height: 800px;">
+  <div style="flex: 1; padding: 16px; overflow-y: auto; height: 1000px;">
     <h3 style="margin-top: 0;">📘 Abbreviation Legend</h3>
     <table style="border-collapse: collapse; width: 100%; font-size: 13px;">
       <thead>
@@ -1669,8 +1670,8 @@ svgElem.call(
 
 const data = ''' + str(bubbles_json) + ''';
 
-const width = 1200;
-const height = 900;
+const width = 1800;
+const height = 1200;
 
 const defs = svgElem.append("defs");
 data.forEach((d, i) => {
@@ -1686,44 +1687,16 @@ data.forEach((d, i) => {
 const simulation = d3.forceSimulation(data)
   .alpha(0.6)
   .alphaDecay(0)
-  .velocityDecay(0.12)
-  .force("charge", d3.forceManyBody().strength(-20))
-  .force("collision", d3.forceCollide().radius(d => d.Size + 10).strength(1))
-  .force("floatX", d3.forceX().strength(() => (Math.random() - 0.5) * 0.0004))
-  .force("floatY", d3.forceY().strength(() => (Math.random() - 0.5) * 0.0004))
+  .velocityDecay(0.1)
+  .force("charge", d3.forceManyBody().strength(-80))
+  .force("collision", d3.forceCollide().radius(d => d.Size + 12).strength(1.2))
+  .force("x", d3.forceX(width / 2).strength(0.05))
+  .force("y", d3.forceY(height / 2).strength(0.05))
   .on("tick", ticked);
-
-setInterval(() => {
-  simulation
-    .force("floatX", d3.forceX().strength(() => (Math.random() - 0.5) * 0.0004))
-    .force("floatY", d3.forceY().strength(() => (Math.random() - 0.5) * 0.0004))
-    .alpha(0.3)
-    .restart();
-}, 4000);
 
 let selectedNode = null;
 let selectedNodeElem = null;
 let originalRadius = null;
-
-function focusBubble(target) {
-  node.each(function(d) {
-    if (d !== target) {
-      d.fx = null;
-      d.fy = null;
-      d3.select(this).select("circle").transition().duration(300).style("opacity", 0.1);
-    } else {
-      d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
-    }
-  });
-  simulation.stop();
-}
-
-function resetFocus() {
-  node.each(function(d) {
-    d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
-  });
-  simulation.alpha(0.3).restart();
-}
 
 const node = zoomLayer.selectAll("g")
   .data(data)
@@ -1789,6 +1762,26 @@ function ticked() {
   node.attr("transform", d => `translate(${d.x},${d.y})`);
 }
 
+function focusBubble(target) {
+  node.each(function(d) {
+    if (d !== target) {
+      d.fx = null;
+      d.fy = null;
+      d3.select(this).select("circle").transition().duration(300).style("opacity", 0.1);
+    } else {
+      d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
+    }
+  });
+  simulation.stop();
+}
+
+function resetFocus() {
+  node.each(function(d) {
+    d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
+  });
+  simulation.alpha(0.3).restart();
+}
+
 function hideInfo() {
   d3.select("#info-panel").style("display", "none");
   if (selectedNode) {
@@ -1837,7 +1830,6 @@ window.addEventListener("message", function(event) {
 </body>
 </html>
 '''
-
 
 
 
