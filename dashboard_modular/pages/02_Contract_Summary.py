@@ -301,45 +301,31 @@ if contract_file:
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
-import numpy as np
 from datetime import datetime
 from pandas.tseries.offsets import MonthBegin
 
-# --- Load Data ---
 if payment_term_file:
-    df_terms = pd.read_excel(payment_term_file)
-    df_terms.columns = df_terms.columns.str.strip().str.upper()
-    df_terms['TANGGAL_TRANSAKSI'] = pd.to_datetime(df_terms['TANGGAL_TRANSAKSI'], errors='coerce')
-    df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
-    df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
-    df_terms['STATUS'] = df_terms['STATUS'].str.upper()
-    df_terms['VENDOR'] = df_terms['VENDOR'].str.strip()
 
-    # --- Filter Date Input ---
-    st.sidebar.header("📅 Filter Tanggal Transaksi")
-    min_date = df_terms['TANGGAL_TRANSAKSI'].min()
-    max_date = df_terms['TANGGAL_TRANSAKSI'].max()
-    start_date, end_date = st.sidebar.date_input(
-        "Pilih Rentang Tanggal",
-        value=[min_date, max_date],
-        min_value=min_date,
-        max_value=max_date
-    )
+    import pandas as pd
+    import plotly.graph_objects as go
 
-    # --- Apply Filter ---
-    df_terms = df_terms[
-        (df_terms['TANGGAL_TRANSAKSI'] >= pd.to_datetime(start_date)) &
-        (df_terms['TANGGAL_TRANSAKSI'] <= pd.to_datetime(end_date))
-    ]
+    # --- Load & process data ---
+    df = pd.read_excel(payment_term_file)
+    df.columns = df.columns.str.strip().str.upper()
+    df['VENDOR'] = df['VENDOR'].str.strip()
+    df['STATUS'] = df['STATUS'].str.upper()
 
-    # --- KPI Summary per Vendor ---
-    df_terms['AMOUNT'] = pd.to_numeric(df_terms['AMOUNT'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
-    df_terms['TOTAL_CONTRACT_VALUE'] = pd.to_numeric(df_terms['TOTAL_CONTRACT_VALUE'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+    # 🔥 CLEANING: Remove commas and convert to numeric
+    df['AMOUNT'] = df['AMOUNT'].astype(str).str.replace(',', '', regex=False)
+    df['TOTAL_CONTRACT_VALUE'] = df['TOTAL_CONTRACT_VALUE'].astype(str).str.replace(',', '', regex=False)
+    df['AMOUNT'] = pd.to_numeric(df['AMOUNT'], errors='coerce').fillna(0)
+    df['TOTAL_CONTRACT_VALUE'] = pd.to_numeric(df['TOTAL_CONTRACT_VALUE'], errors='coerce').fillna(0)
 
-    contract_base = df_terms[['VENDOR', 'START_DATE', 'END_DATE', 'TOTAL_CONTRACT_VALUE']].drop_duplicates()
+    # --- Summarize per vendor ---
+    contract_base = df[['VENDOR', 'START_DATE', 'END_DATE', 'TOTAL_CONTRACT_VALUE']].drop_duplicates()
     contract_value_per_vendor = contract_base.groupby('VENDOR')['TOTAL_CONTRACT_VALUE'].sum()
-    paid_df = df_terms[df_terms['STATUS'] == 'PAID']
+
+    paid_df = df[df['STATUS'] == 'PAID']
     total_paid_per_vendor = paid_df.groupby('VENDOR')['AMOUNT'].sum()
 
     summary_df = pd.DataFrame({
@@ -348,13 +334,22 @@ if payment_term_file:
     }).fillna(0)
 
     summary_df['REMAINING'] = summary_df['CONTRACT_VALUE'] - summary_df['TOTAL_PAID']
-    summary_df['REALIZED_PCT'] = np.where(summary_df['CONTRACT_VALUE'] == 0, 0, (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE']) * 100)
-    summary_df['REALIZED_PCT'] = summary_df['REALIZED_PCT'].round(1)
-    summary_df = summary_df.reset_index()
 
+    # ⛔️ Avoid division by zero using np.where
+    import numpy as np
+    summary_df['REALIZED_PCT'] = np.where(
+        summary_df['CONTRACT_VALUE'] == 0,
+        0,
+        (summary_df['TOTAL_PAID'] / summary_df['CONTRACT_VALUE']) * 100
+    )
+    summary_df['REALIZED_PCT'] = summary_df['REALIZED_PCT'].round(1)
+
+    summary_df = summary_df.reset_index()
+    
+    # --- Build chart ---
     def get_color(pct):
         return '#2ECC71' if pct >= 50 else '#E74C3C'
-
+    
     def build_kpi_bar(df_subset, title="Progress Pembayaran (%)"):
         fig = go.Figure()
         for _, row in df_subset.iterrows():
@@ -364,7 +359,7 @@ if payment_term_file:
             paid = row['TOTAL_PAID']
             rem = row['REMAINING']
             total = row['CONTRACT_VALUE']
-
+    
             fig.add_trace(go.Bar(
                 y=[vendor], x=[pct], name='REALIZED',
                 orientation='h', marker_color=get_color(pct),
@@ -375,6 +370,7 @@ if payment_term_file:
                     f"Sisa: Rp {rem:,.0f} ({rem_pct:.1f}%)<extra></extra>"
                 ), showlegend=False
             ))
+    
             fig.add_trace(go.Bar(
                 y=[vendor], x=[rem_pct], name='REMAINING',
                 orientation='h', marker_color="#D0D3D4",
@@ -385,7 +381,7 @@ if payment_term_file:
                     f"Sisa: Rp {rem:,.0f} ({rem_pct:.1f}%)<extra></extra>"
                 ), showlegend=False
             ))
-
+    
         fig.update_layout(
             barmode='stack',
             title=title,
@@ -396,55 +392,101 @@ if payment_term_file:
             dragmode=False
         )
         return fig
+    
+    # --- Display in Streamlit ---
+    with section_card("📊 Vendor Financial Progress"):
+        fig_vendor = build_kpi_bar(summary_df)
+        st.plotly_chart(fig_vendor, use_container_width=True, config={
+            'scrollZoom': False,
+            'displaylogo': False,
+            'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+            'displayModeBar': 'always'
+        })
 
-    st.subheader("📊 Vendor Financial Progress")
-    fig_vendor = build_kpi_bar(summary_df)
-    st.plotly_chart(fig_vendor, use_container_width=True)
+    # --- Load dan format dasar ---
+    df_terms = pd.read_excel(payment_term_file)
+    df_terms.columns = df_terms.columns.str.strip().str.upper()
+    df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
+    df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
-    # --- Timeline ---
+    # --- Filter Paid Terms ---
+    df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID'].copy()
+
+    # --- Bagi 2: ada contract status & tidak ---
     with_status = df_terms[df_terms['CONTRACT_STATUS'].notna()].copy()
     without_status = df_terms[df_terms['CONTRACT_STATUS'].isna()].copy()
 
-    paid_with_status = df_terms[df_terms['STATUS'] == 'PAID' & df_terms['CONTRACT_STATUS'].notna()]
-    paid_without_status = df_terms[df_terms['STATUS'] == 'PAID' & df_terms['CONTRACT_STATUS'].isna()]
-
+    # === 1) Yang ADA CONTRACT_STATUS ===
+    paid_with_status = df_paid[df_paid['CONTRACT_STATUS'].notna()]
     total_paid_status = paid_with_status.groupby(['VENDOR', 'CONTRACT_STATUS'])['AMOUNT'].sum().reset_index()
     contract_status = with_status[['VENDOR', 'CONTRACT_STATUS', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
     summary_status = contract_status.merge(total_paid_status, on=['VENDOR', 'CONTRACT_STATUS'], how='left')
     summary_status['TOTAL_PAID'] = pd.to_numeric(summary_status['AMOUNT'], errors='coerce').fillna(0)
     summary_status['TOTAL_CONTRACT_VALUE'] = pd.to_numeric(summary_status['TOTAL_CONTRACT_VALUE'], errors='coerce').fillna(0)
-    summary_status['PCT_PROGRESS'] = np.where(summary_status['TOTAL_CONTRACT_VALUE'] == 0, 0, (summary_status['TOTAL_PAID'] / summary_status['TOTAL_CONTRACT_VALUE']) * 100)
-    summary_status['PCT_LABEL'] = summary_status['PCT_PROGRESS'].round(1).astype(str) + '%'
     summary_status.drop(columns='AMOUNT', inplace=True)
+    
+    summary_status['PCT_PROGRESS'] = np.where(
+        summary_status['TOTAL_CONTRACT_VALUE'] == 0,
+        0,
+        (summary_status['TOTAL_PAID'] / summary_status['TOTAL_CONTRACT_VALUE']) * 100
+    )
+    summary_status['PCT_LABEL'] = summary_status['PCT_PROGRESS'].round(1).astype(str) + '%'
 
+
+    # === 2) Yang TIDAK ADA CONTRACT_STATUS ===
+    paid_without_status = df_paid[df_paid['CONTRACT_STATUS'].isna()]
     total_paid_vendor = paid_without_status.groupby('VENDOR')['AMOUNT'].sum().reset_index()
     contract_vendor = without_status[['VENDOR', 'TOTAL_CONTRACT_VALUE', 'START_DATE']].drop_duplicates()
     summary_vendor = contract_vendor.merge(total_paid_vendor, on='VENDOR', how='left')
     summary_vendor['TOTAL_PAID'] = pd.to_numeric(summary_vendor['AMOUNT'], errors='coerce').fillna(0)
     summary_vendor['TOTAL_CONTRACT_VALUE'] = pd.to_numeric(summary_vendor['TOTAL_CONTRACT_VALUE'], errors='coerce').fillna(0)
     summary_vendor['CONTRACT_STATUS'] = None
-    summary_vendor['PCT_PROGRESS'] = np.where(summary_vendor['TOTAL_CONTRACT_VALUE'] == 0, 0, (summary_vendor['TOTAL_PAID'] / summary_vendor['TOTAL_CONTRACT_VALUE']) * 100)
-    summary_vendor['PCT_LABEL'] = summary_vendor['PCT_PROGRESS'].round(1).astype(str) + '%'
     summary_vendor.drop(columns='AMOUNT', inplace=True)
 
+    summary_vendor['PCT_PROGRESS'] = np.where(
+        summary_vendor['TOTAL_CONTRACT_VALUE'] == 0,
+        0,
+        (summary_vendor['TOTAL_PAID'] / summary_vendor['TOTAL_CONTRACT_VALUE']) * 100
+    )
+    summary_vendor['PCT_LABEL'] = summary_vendor['PCT_PROGRESS'].round(1).astype(str) + '%'
+
+    # === Gabungkan semua summary ===
     vendor_summary = pd.concat([summary_status, summary_vendor], ignore_index=True)
+
+    # --- Merge ke data utama ---
     df_terms = pd.merge(df_terms, vendor_summary[['VENDOR', 'CONTRACT_STATUS', 'PCT_PROGRESS', 'PCT_LABEL']],
                         on=['VENDOR', 'CONTRACT_STATUS'], how='left')
 
-    df_terms['VENDOR_DISPLAY'] = df_terms.apply(
-        lambda row: f"{row['VENDOR']} ({row['CONTRACT_STATUS']}) - {row['PCT_LABEL']}" if pd.notna(row['CONTRACT_STATUS'])
-        else f"{row['VENDOR']} - {row['PCT_LABEL']}", axis=1
-    )
+    # --- Label untuk sumbu Y (display project name + status + progress) ---
+    def generate_display_name(row):
+        if pd.notna(row['CONTRACT_STATUS']):
+            return f"{row['VENDOR']} ({row['CONTRACT_STATUS']}) - {row['PCT_LABEL']}"
+        else:
+            return f"{row['VENDOR']} - {row['PCT_LABEL']}"
 
+    df_terms['VENDOR_DISPLAY'] = df_terms.apply(generate_display_name, axis=1)
+
+    # --- Hitung tanggal pembayaran ---
     df_terms['PAYMENT_DATE'] = df_terms.apply(
         lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
     )
     df_terms['PAYMENT_DATE'] = df_terms['PAYMENT_DATE'].dt.to_period('M').dt.to_timestamp()
     df_terms['END_DATE'] = df_terms['PAYMENT_DATE'] + pd.offsets.MonthEnd(0)
-    df_terms['COLOR'] = df_terms['STATUS'].apply(lambda s: '#3498db' if str(s).lower() == 'paid' else '#f1c40f')
 
-    df_plot = df_terms.rename(columns={'VENDOR_DISPLAY': 'Project', 'PAYMENT_DATE': 'Start', 'END_DATE': 'End'})
+    # --- Assign warna status ---
+    def assign_color(status):
+        return '#3498db' if str(status).lower() == 'paid' else '#f1c40f'
 
+    df_terms['COLOR'] = df_terms['STATUS'].apply(assign_color)
+
+    # --- Rename untuk plot ---
+    df_plot = df_terms.rename(columns={
+        'VENDOR_DISPLAY': 'Project',
+        'PAYMENT_DATE': 'Start',
+        'END_DATE': 'End'
+    })
+
+    # --- Buat chart ---
     fig = px.timeline(
         df_plot,
         x_start="Start",
@@ -455,18 +497,32 @@ if payment_term_file:
         hover_data=["TERM_NO", "AMOUNT", "STATUS", "PCT_LABEL"]
     )
 
+    # --- Garis hari ini ---
     today = datetime.today()
-    tickvals = pd.date_range(df_plot['Start'].min(), df_plot['End'].max() + MonthBegin(1), freq='MS')
-
     fig.add_shape(
-        type="line", x0=today, x1=today, y0=0, y1=1,
-        xref='x', yref='paper',
+        type="line",
+        x0=today,
+        x1=today,
+        y0=0,
+        y1=1,
+        xref='x',
+        yref='paper',
         line=dict(color="red", width=2, dash="dash")
     )
     fig.add_annotation(
-        x=today, y=1.02, xref="x", yref="paper", text="Today", showarrow=False,
+        x=today,
+        y=1.02,
+        xref="x",
+        yref="paper",
+        text="Today",
+        showarrow=False,
         font=dict(color="red")
     )
+
+    # --- Setup Tick Bulanan ---
+    min_date = df_plot['Start'].min()
+    max_date = df_plot['End'].max()
+    tickvals = pd.date_range(min_date, max_date + MonthBegin(1), freq='MS')
 
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(
@@ -490,7 +546,6 @@ if payment_term_file:
     )
 
     st.plotly_chart(fig, use_container_width=False)
-
 
 
 
