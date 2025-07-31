@@ -560,7 +560,7 @@ if payment_term_file:
                 min_date = df_valid['TANGGAL_TRANSAKSI'].min().date()
                 max_date = df_valid['TANGGAL_TRANSAKSI'].max().date()
     
-                # Input bisa satu tanggal atau range, jadi dicek dulu
+                # Pilih tanggal dengan default range
                 date_range = st.date_input(
                     "Pilih rentang tanggal transaksi:",
                     value=(min_date, max_date),
@@ -568,26 +568,21 @@ if payment_term_file:
                     max_value=max_date
                 )
     
-                # Kalau hasilnya tuple berarti range
+                # Konversi ke datetime scalar
                 if isinstance(date_range, tuple) and len(date_range) == 2:
-                    start_date, end_date = date_range
+                    start_dt = pd.Timestamp(date_range[0])
+                    end_dt = pd.Timestamp(date_range[1])
                 else:
-                    # Kalau cuma 1 tanggal dipilih
-                    start_date = end_date = date_range
+                    start_dt = end_dt = pd.Timestamp(date_range)
     
-                # Konversi ke Timestamp
-                start_dt = pd.to_datetime(start_date)
-                end_dt = pd.to_datetime(end_date)
-    
-                filtered_df = df_valid[
-                    (df_valid['TANGGAL_TRANSAKSI'] >= start_dt) &
-                    (df_valid['TANGGAL_TRANSAKSI'] <= end_dt)
-                ]
+                # Filter berdasarkan tanggal
+                mask = (df_valid['TANGGAL_TRANSAKSI'] >= start_dt) & (df_valid['TANGGAL_TRANSAKSI'] <= end_dt)
+                filtered_df = df_valid[mask]
     
                 if filtered_df.empty:
                     st.info("Tidak ada transaksi dalam rentang tanggal yang dipilih.")
                 else:
-                    filtered_display = filtered_df.loc[:, ['VENDOR', 'AMOUNT', 'STATUS', 'TANGGAL_TRANSAKSI']]
+                    filtered_display = filtered_df[['VENDOR', 'AMOUNT', 'STATUS', 'TANGGAL_TRANSAKSI']]
                     st.dataframe(filtered_display, use_container_width=True)
         else:
             st.warning("Kolom 'TANGGAL_TRANSAKSI' tidak ditemukan di data.")
