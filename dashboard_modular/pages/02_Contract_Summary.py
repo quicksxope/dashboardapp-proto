@@ -547,32 +547,45 @@ if payment_term_file:
 
     st.plotly_chart(fig, use_container_width=False)
 
-    # --- Section: Filter Tanggal Transaksi dan Tabel Lengkap ---
+        # --- Section: Filter Tanggal Transaksi dan Tabel Lengkap ---
     with section_card("📋 Tabel Transaksi Lengkap (Filter Tanggal Transaksi)"):
         st.subheader("📅 Filter Tanggal Transaksi")
     
+        # Pastikan kolomnya ada dulu
         if 'TANGGAL_TRANSAKSI' in df_terms.columns:
+            # Konversi aman
             df_terms['TANGGAL_TRANSAKSI'] = pd.to_datetime(df_terms['TANGGAL_TRANSAKSI'], errors='coerce')
     
-            min_date = df_terms['TANGGAL_TRANSAKSI'].min()
-            max_date = df_terms['TANGGAL_TRANSAKSI'].max()
+            # Hapus baris yang null
+            df_valid = df_terms[df_terms['TANGGAL_TRANSAKSI'].notna()].copy()
     
-            start_date, end_date = st.date_input(
-                "Pilih rentang tanggal transaksi:",
-                value=(min_date.date(), max_date.date()),
-                min_value=min_date.date(),
-                max_value=max_date.date()
-            )
+            # Kalau ternyata kosong semua, kasih warning
+            if df_valid.empty:
+                st.warning("Tidak ada data dengan tanggal transaksi yang valid.")
+            else:
+                # Ambil min & max date
+                min_date = df_valid['TANGGAL_TRANSAKSI'].min().date()
+                max_date = df_valid['TANGGAL_TRANSAKSI'].max().date()
     
-            filtered_df = df_terms[
-                (df_terms['TANGGAL_TRANSAKSI'] >= pd.to_datetime(start_date)) &
-                (df_terms['TANGGAL_TRANSAKSI'] <= pd.to_datetime(end_date))
-            ]
+                # Input tanggal
+                start_date, end_date = st.date_input(
+                    "Pilih rentang tanggal transaksi:",
+                    value=(min_date, max_date),
+                    min_value=min_date,
+                    max_value=max_date
+                )
     
-            st.dataframe(filtered_df, use_container_width=True)
+                # Filter berdasarkan input
+                filtered_df = df_valid[
+                    (df_valid['TANGGAL_TRANSAKSI'] >= pd.to_datetime(start_date)) &
+                    (df_valid['TANGGAL_TRANSAKSI'] <= pd.to_datetime(end_date))
+                ]
+    
+                st.dataframe(filtered_df, use_container_width=True)
+    
         else:
             st.warning("Kolom 'TANGGAL_TRANSAKSI' tidak ditemukan di data.")
-    
+
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
     today = datetime.today()
