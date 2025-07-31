@@ -1591,43 +1591,22 @@ def main():
 
 <div style="display: flex; flex-direction: row;">
 
+  <!-- BUBBLE CHART AREA -->
   <div style="flex: 3; position: relative;">
     <svg viewBox="0 0 1800 1200" width="100%" height="1000" preserveAspectRatio="xMidYMid meet"></svg>
 
+    <!-- Panel Info -->
     <div id="info-panel"
-      style="
-       position: absolute;
-       top: 20px;
-       right: 20px;
-       background: #f9fafb;
-       border: 1px solid #ddd;
-       padding: 12px 16px;
-       border-radius: 8px;
-       font-size: 13px;
-       color: #111;
-       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-       display: none;
-       max-width: 240px;
-       z-index: 99;
-       word-wrap: break-word;
-       white-space: normal;
-       line-height: 1.4;
-     ">
+     style="position: absolute; top: 20px; right: 20px; background: #f9fafb; border: 1px solid #ddd; padding: 12px 16px; border-radius: 8px; font-size: 13px; color: #111; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: none; max-width: 240px; z-index: 99; word-wrap: break-word; white-space: normal; line-height: 1.4;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div id="info-title" style="font-weight: bold; margin-bottom: 6px;"></div>
-        <button onclick="hideInfo()" style="
-           background: none;
-           border: none;
-           font-weight: bold;
-           font-size: 14px;
-           cursor: pointer;
-           color: #888;
-         ">✕</button>
+        <button onclick="hideInfo()" style="background: none; border: none; font-weight: bold; font-size: 14px; cursor: pointer; color: #888;">✕</button>
       </div>
       <div id="info-body"></div>
     </div>
   </div>
 
+  <!-- LEGEND TABLE -->
   <div style="flex: 1; padding: 16px; overflow-y: auto; height: 1000px;">
     <h3 style="margin-top: 0;">📘 Abbreviation Legend</h3>
     <table style="border-collapse: collapse; width: 100%; font-size: 13px;">
@@ -1638,7 +1617,15 @@ def main():
         </tr>
       </thead>
       <tbody>
-</tbody>
+''' + '\n'.join([
+    f"""<tr onclick="window.postMessage('{row['Abbrev']}', '*')" style="cursor:pointer;"
+         onmouseover="this.style.background='#f0f0f0';"
+         onmouseout="this.style.background='none';">
+          <td style="padding:6px 12px; border-bottom: 1px solid #eee;">{row['Abbrev']}</td>
+          <td style="padding:6px 12px; border-bottom: 1px solid #eee;">{row['Sub Area']}</td>
+        </tr>""" for _, row in sub_area_df.sort_values('Abbrev').iterrows()
+]) + '''
+      </tbody>
     </table>
   </div>
 </div>
@@ -1646,40 +1633,33 @@ def main():
 <script>
 const svgElem = d3.select("svg");
 const zoomLayer = svgElem.append("g");
+svgElem.call(d3.zoom().scaleExtent([1, 4]).on("zoom", event => zoomLayer.attr("transform", event.transform)));
 
-svgElem.call(
-  d3.zoom()
-    .scaleExtent([1, 4])
-    .on("zoom", function(event) {
-      const scale = event.transform.k;
-      zoomLayer.attr("transform", scale === 1 ? null : event.transform);
-    })
-);
-
-const data = ;
-
+const data = ''' + str(bubbles_json) + ''';
 const width = 1800;
 const height = 1200;
+
+// --- Dynamic scaleSize based on max Size ---
+const maxSize = d3.max(data, d => d.Size);
+const scaleSize = size => size * (Math.min(width, height) * 0.15 / maxSize);
 
 const defs = svgElem.append("defs");
 data.forEach((d, i) => {
   const grad = defs.append("radialGradient")
     .attr("id", "grad" + i)
-    .attr("cx", "50%")
-    .attr("cy", "50%")
-    .attr("r", "50%");
+    .attr("cx", "50%").attr("cy", "50%").attr("r", "50%");
   grad.append("stop").attr("offset", "0%").attr("stop-color", d.Color).attr("stop-opacity", 0.3);
   grad.append("stop").attr("offset", "100%").attr("stop-color", d.Color).attr("stop-opacity", 1);
 });
 
 const simulation = d3.forceSimulation(data)
   .alpha(0.6)
-  .alphaDecay(0.01) // Slightly increased decay for faster stabilization
-  .velocityDecay(0.2) // Increased velocity decay to settle faster
-  .force("charge", d3.forceManyBody().strength(-20)) // Reduced repulsion for tighter packing
-  .force("collision", d3.forceCollide().radius(d => d.Size + 5).strength(1.5)) // Reduced collision radius padding, increased strength
-  .force("x", d3.forceX(width / 2).strength(0.08)) // Increased centering strength
-  .force("y", d3.forceY(height / 2).strength(0.08)) // Increased centering strength
+  .alphaDecay(0)
+  .velocityDecay(0.1)
+  .force("charge", d3.forceManyBody().strength(-80))
+  .force("collision", d3.forceCollide().radius(d => scaleSize(d.Size) + 12).strength(1.2))
+  .force("x", d3.forceX(width / 2).strength(0.05))
+  .force("y", d3.forceY(height / 2).strength(0.05))
   .on("tick", ticked);
 
 let selectedNode = null;
@@ -1700,18 +1680,16 @@ const node = zoomLayer.selectAll("g")
     if (selectedNode) {
       selectedNode.fx = null;
       selectedNode.fy = null;
-      d3.select(selectedNodeElem).select("circle")
-        .transition().duration(300).attr("r", originalRadius);
+      d3.select(selectedNodeElem).select("circle").transition().duration(300).attr("r", originalRadius);
     }
 
     selectedNode = d;
     selectedNodeElem = this;
-    originalRadius = d.Size;
+    originalRadius = scaleSize(d.Size);
 
     d.fx = d.x;
     d.fy = d.y;
-    d3.select(this).select("circle")
-      .transition().duration(300).attr("r", d.Size * 1.2);
+    d3.select(this).select("circle").transition().duration(300).attr("r", originalRadius * 1.2);
 
     focusBubble(d);
 
@@ -1721,7 +1699,7 @@ const node = zoomLayer.selectAll("g")
   });
 
 node.append("circle")
-  .attr("r", d => d.Size)
+  .attr("r", d => scaleSize(d.Size))
   .attr("fill", (d, i) => `url(#grad${i})`)
   .attr("stroke", "#fff")
   .attr("stroke-width", 1.5);
@@ -1730,7 +1708,7 @@ node.append("text")
   .text(d => d.Abbrev)
   .attr("text-anchor", "middle")
   .attr("dy", "-0.3em")
-  .attr("font-size", d => Math.max(8, d.Size / 2.5) + "px")
+  .attr("font-size", d => Math.max(8, scaleSize(d.Size) / 2.5) + "px")
   .attr("fill", "#111")
   .style("pointer-events", "none");
 
@@ -1738,27 +1716,21 @@ node.append("text")
   .text(d => `${d.Progress.toFixed(1)}%`)
   .attr("text-anchor", "middle")
   .attr("dy", "1em")
-  .attr("font-size", d => Math.max(6, d.Size / 3.5) + "px")
+  .attr("font-size", d => Math.max(6, scaleSize(d.Size) / 3.5) + "px")
   .attr("fill", "#111")
   .style("pointer-events", "none");
 
 function ticked() {
   node.each(d => {
-    d.x = Math.max(d.Size, Math.min(width - d.Size, d.x));
-    d.y = Math.max(d.Size, Math.min(height - d.Size, d.y));
+    d.x = Math.max(scaleSize(d.Size), Math.min(width - scaleSize(d.Size), d.x));
+    d.y = Math.max(scaleSize(d.Size), Math.min(height - scaleSize(d.Size), d.y));
   });
   node.attr("transform", d => `translate(${d.x},${d.y})`);
 }
 
 function focusBubble(target) {
   node.each(function(d) {
-    if (d !== target) {
-      d.fx = null;
-      d.fy = null;
-      d3.select(this).select("circle").transition().duration(300).style("opacity", 0.1);
-    } else {
-      d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
-    }
+    d3.select(this).select("circle").transition().duration(300).style("opacity", d === target ? 1.0 : 0.1);
   });
   simulation.stop();
 }
@@ -1775,15 +1747,13 @@ function hideInfo() {
   if (selectedNode) {
     selectedNode.fx = null;
     selectedNode.fy = null;
-    d3.select(selectedNodeElem).select("circle")
-      .transition().duration(300).attr("r", originalRadius);
+    d3.select(selectedNodeElem).select("circle").transition().duration(300).attr("r", originalRadius);
     selectedNode = null;
     selectedNodeElem = null;
   }
   resetFocus();
 }
 
-// --- Listen to legend clicks ---
 window.addEventListener("message", function(event) {
   const abbrev = event.data;
   const target = data.find(d => d.Abbrev === abbrev);
@@ -1797,16 +1767,14 @@ window.addEventListener("message", function(event) {
   if (selectedNode && selectedNode !== target) {
     selectedNode.fx = null;
     selectedNode.fy = null;
-    d3.select(selectedNodeElem).select("circle")
-      .transition().duration(300).attr("r", originalRadius);
+    d3.select(selectedNodeElem).select("circle").transition().duration(300).attr("r", originalRadius);
   }
 
   selectedNode = target;
   selectedNodeElem = targetNode;
-  originalRadius = target.Size;
+  originalRadius = scaleSize(target.Size);
 
-  d3.select(targetNode).select("circle")
-    .transition().duration(300).attr("r", target.Size * 1.2);
+  d3.select(targetNode).select("circle").transition().duration(300).attr("r", originalRadius * 1.2);
 
   focusBubble(target);
 
@@ -1818,6 +1786,7 @@ window.addEventListener("message", function(event) {
 </body>
 </html>
 '''
+
 
 
 
