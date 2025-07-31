@@ -1653,9 +1653,9 @@ data.forEach((d, i) => {
 });
 
 const simulation = d3.forceSimulation(data)
-  .alpha(0.6)
-  .alphaDecay(0)
-  .velocityDecay(0.1)
+  .alpha(1)
+  .alphaDecay(0.04)
+  .velocityDecay(0.3)
   .force("charge", d3.forceManyBody().strength(-80))
   .force("collision", d3.forceCollide().radius(d => scaleSize(d.Size) + 12).strength(1.2))
   .force("x", d3.forceX(width / 2).strength(0.05))
