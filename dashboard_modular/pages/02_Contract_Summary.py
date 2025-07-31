@@ -547,6 +547,32 @@ if payment_term_file:
 
     st.plotly_chart(fig, use_container_width=False)
 
+    # --- SECTION: Filter & Tabel Transaksi Lengkap ---
+    with st.expander("📋 Tabel Transaksi Lengkap (Filter Tanggal Transaksi)"):
+        st.subheader("📅 Filter Tanggal Transaksi")
+    
+        # Pastikan kolom datetime valid
+        df['Tanggal_Transaksi'] = pd.to_datetime(df['Tanggal_Transaksi'], errors='coerce')
+    
+        # Buat filter tanggal
+        min_date = df['Tanggal_Transaksi'].min()
+        max_date = df['Tanggal_Transaksi'].max()
+    
+        start_date, end_date = st.date_input(
+            "Pilih rentang tanggal transaksi:",
+            value=(min_date, max_date),
+            min_value=min_date,
+            max_value=max_date
+        )
+    
+        # Filter berdasarkan tanggal transaksi
+        filtered_df = df[
+            (df['Tanggal_Transaksi'] >= pd.to_datetime(start_date)) &
+            (df['Tanggal_Transaksi'] <= pd.to_datetime(end_date))
+        ]
+    
+        st.dataframe(filtered_df, use_container_width=True)
+    
 
 
 
