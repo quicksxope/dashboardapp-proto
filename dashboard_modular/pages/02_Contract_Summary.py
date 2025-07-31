@@ -560,22 +560,28 @@ if payment_term_file:
                 min_date = df_valid['TANGGAL_TRANSAKSI'].min().date()
                 max_date = df_valid['TANGGAL_TRANSAKSI'].max().date()
     
-                # Ambil filter dari user
-                start_date, end_date = st.date_input(
+                # Input bisa satu tanggal atau range, jadi dicek dulu
+                date_range = st.date_input(
                     "Pilih rentang tanggal transaksi:",
                     value=(min_date, max_date),
                     min_value=min_date,
                     max_value=max_date
                 )
     
-                # Konversi ke datetime
-                start_datetime = pd.to_datetime(start_date)
-                end_datetime = pd.to_datetime(end_date)
+                # Kalau hasilnya tuple berarti range
+                if isinstance(date_range, tuple) and len(date_range) == 2:
+                    start_date, end_date = date_range
+                else:
+                    # Kalau cuma 1 tanggal dipilih
+                    start_date = end_date = date_range
     
-                # Filter datanya
+                # Konversi ke Timestamp
+                start_dt = pd.to_datetime(start_date)
+                end_dt = pd.to_datetime(end_date)
+    
                 filtered_df = df_valid[
-                    (df_valid['TANGGAL_TRANSAKSI'] >= start_datetime) &
-                    (df_valid['TANGGAL_TRANSAKSI'] <= end_datetime)
+                    (df_valid['TANGGAL_TRANSAKSI'] >= start_dt) &
+                    (df_valid['TANGGAL_TRANSAKSI'] <= end_dt)
                 ]
     
                 if filtered_df.empty:
