@@ -581,10 +581,15 @@ if payment_term_file:
                     (df_valid['TANGGAL_TRANSAKSI'] <= pd.to_datetime(end_date))
                 ]
     
-                st.dataframe(filtered_df, use_container_width=True)
+                # Pilih kolom tertentu saja
+                filtered_display = filtered_df.loc[:, ['VENDOR', 'AMOUNT', 'STATUS', 'TANGGAL_TRANSAKSI']]
+    
+                # Tampilkan tabel
+                st.dataframe(filtered_display, use_container_width=True)
     
         else:
             st.warning("Kolom 'TANGGAL_TRANSAKSI' tidak ditemukan di data.")
+
 
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
