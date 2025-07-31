@@ -559,34 +559,39 @@ if payment_term_file:
             # Hapus baris yang null
             df_valid = df_terms[df_terms['TANGGAL_TRANSAKSI'].notna()].copy()
     
-            # Kalau ternyata kosong semua, kasih warning
             if df_valid.empty:
                 st.warning("Tidak ada data dengan tanggal transaksi yang valid.")
             else:
-                # Ambil min & max date
-                min_date = df_valid['TANGGAL_TRANSAKSI'].min().date()
-                max_date = df_valid['TANGGAL_TRANSAKSI'].max().date()
+                # Ambil min & max date, konversi ke datetime.date
+                min_date = df_valid['TANGGAL_TRANSAKSI'].min()
+                max_date = df_valid['TANGGAL_TRANSAKSI'].max()
     
-                # Input tanggal
-                start_date, end_date = st.date_input(
+                # Konversi ke date object
+                min_date_date = min_date.date() if isinstance(min_date, pd.Timestamp) else datetime.strptime(min_date, "%Y-%m-%d").date()
+                max_date_date = max_date.date() if isinstance(max_date, pd.Timestamp) else datetime.strptime(max_date, "%Y-%m-%d").date()
+    
+                # Range input
+                date_range = st.date_input(
                     "Pilih rentang tanggal transaksi:",
-                    value=(min_date, max_date),
-                    min_value=min_date,
-                    max_value=max_date
+                    value=(min_date_date, max_date_date),
+                    min_value=min_date_date,
+                    max_value=max_date_date
                 )
     
-                # Filter berdasarkan input
-                filtered_df = df_valid[
-                    (df_valid['TANGGAL_TRANSAKSI'] >= pd.to_datetime(start_date)) &
-                    (df_valid['TANGGAL_TRANSAKSI'] <= pd.to_datetime(end_date))
-                ]
+                if isinstance(date_range, tuple) and len(date_range) == 2:
+                    start_date, end_date = date_range
     
-                # Pilih kolom tertentu saja
-                filtered_display = filtered_df.loc[:, ['VENDOR', 'AMOUNT', 'STATUS', 'TANGGAL_TRANSAKSI']]
+                    # Filter berdasarkan input
+                    filtered_df = df_valid[
+                        (df_valid['TANGGAL_TRANSAKSI'] >= pd.to_datetime(start_date)) &
+                        (df_valid['TANGGAL_TRANSAKSI'] <= pd.to_datetime(end_date))
+                    ]
     
-                # Tampilkan tabel
-                st.dataframe(filtered_display, use_container_width=True)
-    
+                    # Tampilkan kolom yang diminta saja
+                    filtered_display = filtered_df.loc[:, ['VENDOR', 'AMOUNT', 'STATUS', 'TANGGAL_TRANSAKSI']]
+                    st.dataframe(filtered_display, use_container_width=True)
+                else:
+                    st.info("Silakan pilih rentang tanggal terlebih dahulu.")
         else:
             st.warning("Kolom 'TANGGAL_TRANSAKSI' tidak ditemukan di data.")
 
