@@ -547,16 +547,15 @@ if payment_term_file:
 
     st.plotly_chart(fig, use_container_width=False)
 
-    # --- SECTION: Filter & Tabel Transaksi Lengkap ---
-    with st.expander("📋 Tabel Transaksi Lengkap (Filter Tanggal Transaksi)"):
+    with section_card("📋 Tabel Transaksi Lengkap (Filter Tanggal Transaksi)"):
         st.subheader("📅 Filter Tanggal Transaksi")
     
         # Pastikan kolom datetime valid
-        df['Tanggal_Transaksi'] = pd.to_datetime(df['Tanggal_Transaksi'], errors='coerce')
+        df_terms['TANGGAL_TRANSAKSI'] = pd.to_datetime(df_terms['TANGGAL_TRANSAKSI'], errors='coerce')
     
         # Buat filter tanggal
-        min_date = df['Tanggal_Transaksi'].min()
-        max_date = df['Tanggal_Transaksi'].max()
+        min_date = df_terms['TANGGAL_TRANSAKSI'].min()
+        max_date = df_terms['TANGGAL_TRANSAKSI'].max()
     
         start_date, end_date = st.date_input(
             "Pilih rentang tanggal transaksi:",
@@ -566,14 +565,12 @@ if payment_term_file:
         )
     
         # Filter berdasarkan tanggal transaksi
-        filtered_df = df[
-            (df['Tanggal_Transaksi'] >= pd.to_datetime(start_date)) &
-            (df['Tanggal_Transaksi'] <= pd.to_datetime(end_date))
+        filtered_df = df_terms[
+            (df_terms['TANGGAL_TRANSAKSI'] >= pd.to_datetime(start_date)) &
+            (df_terms['TANGGAL_TRANSAKSI'] <= pd.to_datetime(end_date))
         ]
     
         st.dataframe(filtered_df, use_container_width=True)
-    
-
 
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
