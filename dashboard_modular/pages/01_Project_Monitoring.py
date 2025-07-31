@@ -1591,47 +1591,44 @@ def main():
 
 <div style="display: flex; flex-direction: row;">
 
-  <!-- BUBBLE CHART AREA -->
   <div style="flex: 3; position: relative;">
-    <svg viewBox="0 0 1200 900" width="100%" height="800" preserveAspectRatio="xMidYMid meet"></svg>
+    <svg viewBox="0 0 1800 1200" width="100%" height="1000" preserveAspectRatio="xMidYMid meet"></svg>
 
-    <!-- Panel Info -->
     <div id="info-panel"
-     style="
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: #f9fafb;
-      border: 1px solid #ddd;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      color: #111;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      display: none;
-      max-width: 240px;
-      z-index: 99;
-      word-wrap: break-word;
-      white-space: normal;
-      line-height: 1.4;
-    ">
+      style="
+       position: absolute;
+       top: 20px;
+       right: 20px;
+       background: #f9fafb;
+       border: 1px solid #ddd;
+       padding: 12px 16px;
+       border-radius: 8px;
+       font-size: 13px;
+       color: #111;
+       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+       display: none;
+       max-width: 240px;
+       z-index: 99;
+       word-wrap: break-word;
+       white-space: normal;
+       line-height: 1.4;
+     ">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div id="info-title" style="font-weight: bold; margin-bottom: 6px;"></div>
         <button onclick="hideInfo()" style="
-          background: none;
-          border: none;
-          font-weight: bold;
-          font-size: 14px;
-          cursor: pointer;
-          color: #888;
-        ">✕</button>
+           background: none;
+           border: none;
+           font-weight: bold;
+           font-size: 14px;
+           cursor: pointer;
+           color: #888;
+         ">✕</button>
       </div>
       <div id="info-body"></div>
     </div>
   </div>
 
-  <!-- LEGEND TABLE -->
-  <div style="flex: 1; padding: 16px; overflow-y: auto; height: 800px;">
+  <div style="flex: 1; padding: 16px; overflow-y: auto; height: 1000px;">
     <h3 style="margin-top: 0;">📘 Abbreviation Legend</h3>
     <table style="border-collapse: collapse; width: 100%; font-size: 13px;">
       <thead>
@@ -1641,15 +1638,7 @@ def main():
         </tr>
       </thead>
       <tbody>
-''' + '\n'.join([
-    f"""<tr onclick="window.postMessage('{row['Abbrev']}', '*')" style="cursor:pointer;"
-         onmouseover="this.style.background='#f0f0f0';"
-         onmouseout="this.style.background='none';">
-          <td style="padding:6px 12px; border-bottom: 1px solid #eee;">{row['Abbrev']}</td>
-          <td style="padding:6px 12px; border-bottom: 1px solid #eee;">{row['Sub Area']}</td>
-        </tr>""" for _, row in sub_area_df.sort_values('Abbrev').iterrows()
-]) + '''
-      </tbody>
+</tbody>
     </table>
   </div>
 </div>
@@ -1667,10 +1656,10 @@ svgElem.call(
     })
 );
 
-const data = ''' + str(bubbles_json) + ''';
+const data = ;
 
-const width = 1200;
-const height = 900;
+const width = 1800;
+const height = 1200;
 
 const defs = svgElem.append("defs");
 data.forEach((d, i) => {
@@ -1685,45 +1674,17 @@ data.forEach((d, i) => {
 
 const simulation = d3.forceSimulation(data)
   .alpha(0.6)
-  .alphaDecay(0)
-  .velocityDecay(0.12)
-  .force("charge", d3.forceManyBody().strength(-20))
-  .force("collision", d3.forceCollide().radius(d => d.Size + 10).strength(1))
-  .force("floatX", d3.forceX().strength(() => (Math.random() - 0.5) * 0.0004))
-  .force("floatY", d3.forceY().strength(() => (Math.random() - 0.5) * 0.0004))
+  .alphaDecay(0.01) // Slightly increased decay for faster stabilization
+  .velocityDecay(0.2) // Increased velocity decay to settle faster
+  .force("charge", d3.forceManyBody().strength(-20)) // Reduced repulsion for tighter packing
+  .force("collision", d3.forceCollide().radius(d => d.Size + 5).strength(1.5)) // Reduced collision radius padding, increased strength
+  .force("x", d3.forceX(width / 2).strength(0.08)) // Increased centering strength
+  .force("y", d3.forceY(height / 2).strength(0.08)) // Increased centering strength
   .on("tick", ticked);
-
-setInterval(() => {
-  simulation
-    .force("floatX", d3.forceX().strength(() => (Math.random() - 0.5) * 0.0004))
-    .force("floatY", d3.forceY().strength(() => (Math.random() - 0.5) * 0.0004))
-    .alpha(0.3)
-    .restart();
-}, 4000);
 
 let selectedNode = null;
 let selectedNodeElem = null;
 let originalRadius = null;
-
-function focusBubble(target) {
-  node.each(function(d) {
-    if (d !== target) {
-      d.fx = null;
-      d.fy = null;
-      d3.select(this).select("circle").transition().duration(300).style("opacity", 0.1);
-    } else {
-      d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
-    }
-  });
-  simulation.stop();
-}
-
-function resetFocus() {
-  node.each(function(d) {
-    d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
-  });
-  simulation.alpha(0.3).restart();
-}
 
 const node = zoomLayer.selectAll("g")
   .data(data)
@@ -1787,6 +1748,26 @@ function ticked() {
     d.y = Math.max(d.Size, Math.min(height - d.Size, d.y));
   });
   node.attr("transform", d => `translate(${d.x},${d.y})`);
+}
+
+function focusBubble(target) {
+  node.each(function(d) {
+    if (d !== target) {
+      d.fx = null;
+      d.fy = null;
+      d3.select(this).select("circle").transition().duration(300).style("opacity", 0.1);
+    } else {
+      d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
+    }
+  });
+  simulation.stop();
+}
+
+function resetFocus() {
+  node.each(function(d) {
+    d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
+  });
+  simulation.alpha(0.3).restart();
 }
 
 function hideInfo() {
