@@ -547,31 +547,32 @@ if payment_term_file:
 
     st.plotly_chart(fig, use_container_width=False)
 
+    # --- Section: Filter Tanggal Transaksi dan Tabel Lengkap ---
     with section_card("📋 Tabel Transaksi Lengkap (Filter Tanggal Transaksi)"):
         st.subheader("📅 Filter Tanggal Transaksi")
     
-        # Pastikan kolom datetime valid
-        df_terms['TANGGAL_TRANSAKSI'] = pd.to_datetime(df_terms['TANGGAL_TRANSAKSI'], errors='coerce')
+        if 'TANGGAL_TRANSAKSI' in df_terms.columns:
+            df_terms['TANGGAL_TRANSAKSI'] = pd.to_datetime(df_terms['TANGGAL_TRANSAKSI'], errors='coerce')
     
-        # Buat filter tanggal
-        min_date = df_terms['TANGGAL_TRANSAKSI'].min()
-        max_date = df_terms['TANGGAL_TRANSAKSI'].max()
+            min_date = df_terms['TANGGAL_TRANSAKSI'].min()
+            max_date = df_terms['TANGGAL_TRANSAKSI'].max()
     
-        start_date, end_date = st.date_input(
-            "Pilih rentang tanggal transaksi:",
-            value=(min_date, max_date),
-            min_value=min_date,
-            max_value=max_date
-        )
+            start_date, end_date = st.date_input(
+                "Pilih rentang tanggal transaksi:",
+                value=(min_date.date(), max_date.date()),
+                min_value=min_date.date(),
+                max_value=max_date.date()
+            )
     
-        # Filter berdasarkan tanggal transaksi
-        filtered_df = df_terms[
-            (df_terms['TANGGAL_TRANSAKSI'] >= pd.to_datetime(start_date)) &
-            (df_terms['TANGGAL_TRANSAKSI'] <= pd.to_datetime(end_date))
-        ]
+            filtered_df = df_terms[
+                (df_terms['TANGGAL_TRANSAKSI'] >= pd.to_datetime(start_date)) &
+                (df_terms['TANGGAL_TRANSAKSI'] <= pd.to_datetime(end_date))
+            ]
     
-        st.dataframe(filtered_df, use_container_width=True)
-
+            st.dataframe(filtered_df, use_container_width=True)
+        else:
+            st.warning("Kolom 'TANGGAL_TRANSAKSI' tidak ditemukan di data.")
+    
 
     # --- Tabel Warning Termin Jatuh Tempo Bulan Ini ---
     today = datetime.today()
