@@ -1593,7 +1593,7 @@ def main():
 
   <!-- BUBBLE CHART AREA -->
   <div style="flex: 3; position: relative;">
-    <svg viewBox="0 0 1800 1200" width="100%" height="1000" preserveAspectRatio="xMidYMid meet"></svg>
+    <svg viewBox="0 0 1800 1200" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
 
     <!-- Panel Info -->
     <div id="info-panel"
