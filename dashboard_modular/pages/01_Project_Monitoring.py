@@ -1585,6 +1585,14 @@ def main():
             html_code = '''
 <html>
 <head>
+<style>
+/* Override width limit */
+.st-emotion-cache-1xskgtr {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 auto !important;
+}
+</style>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body style="margin:0; background-color:#fff; font-family:Arial, sans-serif;">
