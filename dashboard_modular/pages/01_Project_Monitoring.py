@@ -1583,205 +1583,253 @@ def main():
             bubbles_json = bubble_data.to_dict(orient='records')
 
             html_code = '''
-<html>
+<html lang="en">
 <head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #fff; font-family: Arial, sans-serif; color: #111; }
+
+  /* Full area inside iframe */
+  #app {
+    display: flex;
+    width: 100vw;           /* full width of iframe */
+    height: 100vh;          /* full height of iframe */
+    overflow: hidden;
+  }
+
+  /* Left = chart area takes the rest */
+  #chart-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    background: #fafafa;
+  }
+  #bubble-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Info panel */
+  #info-panel {
+    position: absolute; top: 16px; right: 16px;
+    background: #f9fafb; border: 1px solid #ddd; padding: 12px 16px;
+    border-radius: 8px; font-size: 13px; color: #111;
+    box-shadow: 0 2px 6px rgba(0,0,0,.1);
+    display: none; max-width: 280px; z-index: 5;
+    word-wrap: break-word; white-space: normal; line-height: 1.4;
+  }
+
+  /* Right = legend fixed width */
+  #legend {
+    width: 360px;           /* tweak kalau perlu */
+    max-width: 40vw;
+    height: 100%;
+    overflow-y: auto;
+    padding: 16px;
+    border-left: 1px solid #eee;
+    background: #fff;
+  }
+  #legend h3 { margin: 0 0 8px 0; }
+  #legend table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  #legend th, #legend td { padding: 6px 12px; border-bottom: 1px solid #eee; text-align: left; }
+  #legend tr { cursor: pointer; }
+  #legend tr:hover { background: #f0f0f0; }
+</style>
 </head>
-<body style="margin:0; background-color:#fff; font-family:Arial, sans-serif;">
+<body>
 
-<div style="display: flex; flex-direction: row;">
+<div id="app">
+  <!-- CHART -->
+  <div id="chart-wrap">
+    <svg id="bubble-svg" viewBox="0 0 1800 1200" preserveAspectRatio="xMidYMid meet"></svg>
 
-  <!-- BUBBLE CHART AREA -->
-  <div style="flex: 3; position: relative;">
-    <svg viewBox="0 0 1800 1200" width="100%" height="1000" preserveAspectRatio="xMidYMid meet"></svg>
-
-    <!-- Panel Info -->
-    <div id="info-panel"
-     style="position: absolute; top: 20px; right: 20px; background: #f9fafb; border: 1px solid #ddd; padding: 12px 16px; border-radius: 8px; font-size: 13px; color: #111; box-shadow: 0 2px 6px rgba(0,0,0,0.1); display: none; max-width: 240px; z-index: 99; word-wrap: break-word; white-space: normal; line-height: 1.4;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div id="info-title" style="font-weight: bold; margin-bottom: 6px;"></div>
-        <button onclick="hideInfo()" style="background: none; border: none; font-weight: bold; font-size: 14px; cursor: pointer; color: #888;">✕</button>
+    <div id="info-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <div id="info-title" style="font-weight:bold;"></div>
+        <button onclick="hideInfo()" style="background:none;border:none;font-weight:bold;font-size:14px;cursor:pointer;color:#888;">✕</button>
       </div>
       <div id="info-body"></div>
     </div>
   </div>
 
-  <!-- LEGEND TABLE -->
-  <div style="flex: 1; padding: 16px; overflow-y: auto; height: 1000px;">
-    <h3 style="margin-top: 0;">📘 Abbreviation Legend</h3>
-    <table style="border-collapse: collapse; width: 100%; font-size: 13px;">
+  <!-- LEGEND -->
+  <aside id="legend">
+    <h3>📘 Abbreviation Legend</h3>
+    <table>
       <thead>
         <tr>
-          <th style="text-align:left; padding: 8px; border-bottom: 2px solid #ccc;">Abbrev</th>
-          <th style="text-align:left; padding: 8px; border-bottom: 2px solid #ccc;">Full Name</th>
+          <th>Abbrev</th>
+          <th>Full Name</th>
         </tr>
       </thead>
       <tbody>
 ''' + '\n'.join([
-    f"""<tr onclick="window.postMessage('{row['Abbrev']}', '*')" style="cursor:pointer;"
-         onmouseover="this.style.background='#f0f0f0';"
-         onmouseout="this.style.background='none';">
-          <td style="padding:6px 12px; border-bottom: 1px solid #eee;">{row['Abbrev']}</td>
-          <td style="padding:6px 12px; border-bottom: 1px solid #eee;">{row['Sub Area']}</td>
-        </tr>""" for _, row in sub_area_df.sort_values('Abbrev').iterrows()
+    f"""<tr onclick="window.postMessage('{row['Abbrev']}', '*')">
+          <td>{row['Abbrev']}</td>
+          <td>{row['Sub Area']}</td>
+        </tr>"""
+    for _, row in sub_area_df.sort_values('Abbrev').iterrows()
 ]) + '''
       </tbody>
     </table>
-  </div>
+  </aside>
 </div>
 
 <script>
-const svgElem = d3.select("svg");
-const zoomLayer = svgElem.append("g");
-svgElem.call(d3.zoom().scaleExtent([1, 4]).on("zoom", event => zoomLayer.attr("transform", event.transform)));
+  const svgElem = d3.select("#bubble-svg");
+  const zoomLayer = svgElem.append("g");
+  svgElem.call(d3.zoom().scaleExtent([1, 4]).on("zoom", (event) => {
+    zoomLayer.attr("transform", event.transform);
+  }));
 
-const data = ''' + str(bubbles_json) + ''';
-const width = 1800;
-const height = 1200;
+  const data = ''' + str(bubbles_json) + ''';
 
-// --- Dynamic scaleSize based on max Size ---
-const maxSize = d3.max(data, d => d.Size);
-const scaleSize = size => size * (Math.min(width, height) * 0.15 / maxSize);
+  // container-aware size
+  let width = 1800, height = 1200;
+  function getContainerSize() {
+    const rect = document.getElementById("chart-wrap").getBoundingClientRect();
+    width = Math.max(300, rect.width);
+    height = Math.max(300, rect.height);
+  }
+  getContainerSize();
+  window.addEventListener("resize", () => {
+    getContainerSize();
+    // refresh center/forces & radii on resize
+    simulation.force("x", d3.forceX(width / 2).strength(0.04));
+    simulation.force("y", d3.forceY(height / 2).strength(0.04));
+    simulation.alpha(0.25).restart();
+  });
 
-const defs = svgElem.append("defs");
-data.forEach((d, i) => {
-  const grad = defs.append("radialGradient")
-    .attr("id", "grad" + i)
-    .attr("cx", "50%").attr("cy", "50%").attr("r", "50%");
-  grad.append("stop").attr("offset", "0%").attr("stop-color", d.Color).attr("stop-opacity", 0.3);
-  grad.append("stop").attr("offset", "100%").attr("stop-color", d.Color).attr("stop-opacity", 1);
-});
+  // --- dynamic radius (responsive to container) ---
+  const maxSize = d3.max(data, d => d.Size) || 1;
+  const scaleSize = (size) => size * (Math.min(width, height) * 0.15 / maxSize);
 
-const simulation = d3.forceSimulation(data)
-  .alpha(1)
-  .alphaDecay(0.03)
-  .velocityDecay(0.3)
-  .force("charge", d3.forceManyBody().strength(-80))
-  .force("collision", d3.forceCollide().radius(d => scaleSize(d.Size) + 12).strength(1.2))
-  .force("x", d3.forceX(width / 2).strength(0.05))
-  .force("y", d3.forceY(height / 2).strength(0.05))
-  .on("tick", ticked);
+  // gradients
+  const defs = svgElem.append("defs");
+  data.forEach((d, i) => {
+    const grad = defs.append("radialGradient")
+      .attr("id", "grad" + i)
+      .attr("cx", "50%").attr("cy", "50%").attr("r", "50%");
+    grad.append("stop").attr("offset", "0%").attr("stop-color", d.Color).attr("stop-opacity", 0.3);
+    grad.append("stop").attr("offset", "100%").attr("stop-color", d.Color).attr("stop-opacity", 1);
+  });
 
-let selectedNode = null;
-let selectedNodeElem = null;
-let originalRadius = null;
+  // smooth, continuous movement
+  const simulation = d3.forceSimulation(data)
+    .alpha(0.6)
+    .alphaDecay(0.005)
+    .alphaTarget(0.02)
+    .velocityDecay(0.45)
+    .force("charge", d3.forceManyBody().strength(-70))
+    .force("collision", d3.forceCollide().radius(d => scaleSize(d.Size) + 12).strength(1.1))
+    .force("x", d3.forceX(width / 2).strength(0.04))
+    .force("y", d3.forceY(height / 2).strength(0.04))
+    .on("tick", ticked);
 
-const node = zoomLayer.selectAll("g")
-  .data(data)
-  .enter().append("g")
-  .style("cursor", "pointer")
-  .on("click", function(event, d) {
-    if (selectedNode === d) {
-      hideInfo();
-      resetFocus();
-      return;
-    }
+  let selectedNode = null, selectedNodeElem = null, originalRadius = null;
 
+  const node = zoomLayer.selectAll("g.node")
+    .data(data)
+    .enter().append("g")
+    .attr("class", "node")
+    .style("cursor", "pointer")
+    .on("click", function(event, d) {
+      if (selectedNode === d) { hideInfo(); resetFocus(); return; }
+      if (selectedNode) {
+        selectedNode.fx = null; selectedNode.fy = null;
+        d3.select(selectedNodeElem).select("circle").transition().duration(300).attr("r", originalRadius);
+      }
+      selectedNode = d; selectedNodeElem = this; originalRadius = scaleSize(d.Size);
+      d.fx = d.x; d.fy = d.y;
+      d3.select(this).select("circle").transition().duration(300).attr("r", originalRadius * 1.2);
+      focusBubble(d);
+      d3.select("#info-title").text(d.SubArea);
+      d3.select("#info-body").html(`<strong>Progress:</strong> ${d.Progress.toFixed(1)}%<br/><strong>Status:</strong> ${d.Status}`);
+      d3.select("#info-panel").style("display", "block");
+    });
+
+  node.append("circle")
+    .attr("r", d => scaleSize(d.Size))
+    .attr("fill", (d, i) => `url(#grad${i})`)
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 1.5);
+
+  node.append("text")
+    .text(d => d.Abbrev)
+    .attr("text-anchor", "middle")
+    .attr("dy", "-0.3em")
+    .attr("font-size", d => Math.max(8, scaleSize(d.Size) / 2.5) + "px")
+    .attr("fill", "#111")
+    .style("pointer-events", "none");
+
+  node.append("text")
+    .text(d => `${d.Progress.toFixed(1)}%`)
+    .attr("text-anchor", "middle")
+    .attr("dy", "1em")
+    .attr("font-size", d => Math.max(6, scaleSize(d.Size) / 3.5) + "px")
+    .attr("fill", "#111")
+    .style("pointer-events", "none");
+
+  function ticked() {
+    node.each(d => {
+      const r = scaleSize(d.Size);
+      d.x = Math.max(r, Math.min(width - r, d.x));
+      d.y = Math.max(r, Math.min(height - r, d.y));
+    });
+    node.attr("transform", d => `translate(${d.x},${d.y})`);
+  }
+
+  function focusBubble(target) {
+    node.each(function(d) {
+      d3.select(this).select("circle").transition().duration(300).style("opacity", d === target ? 1.0 : 0.12);
+    });
+    simulation.alphaTarget(0.02);
+  }
+
+  function resetFocus() {
+    node.each(function() {
+      d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
+    });
+    simulation.alpha(0.3).alphaTarget(0.02).restart();
+  }
+
+  function hideInfo() {
+    d3.select("#info-panel").style("display", "none");
     if (selectedNode) {
-      selectedNode.fx = null;
-      selectedNode.fy = null;
+      selectedNode.fx = null; selectedNode.fy = null;
+      d3.select(selectedNodeElem).select("circle").transition().duration(300).attr("r", originalRadius);
+      selectedNode = null; selectedNodeElem = null;
+    }
+    resetFocus();
+  }
+
+  // select from legend
+  window.addEventListener("message", function(event) {
+    const abbrev = event.data;
+    const target = data.find(d => d.Abbrev === abbrev);
+    if (!target) return;
+    const i = data.indexOf(target);
+    const targetNode = node._groups[0][i];
+    target.fx = target.x; target.fy = target.y;
+
+    if (selectedNode && selectedNode !== target) {
+      selectedNode.fx = null; selectedNode.fy = null;
       d3.select(selectedNodeElem).select("circle").transition().duration(300).attr("r", originalRadius);
     }
 
-    selectedNode = d;
-    selectedNodeElem = this;
-    originalRadius = scaleSize(d.Size);
-
-    d.fx = d.x;
-    d.fy = d.y;
-    d3.select(this).select("circle").transition().duration(300).attr("r", originalRadius * 1.2);
-
-    focusBubble(d);
-
-    d3.select("#info-title").text(d.SubArea);
-    d3.select("#info-body").html(`<strong>Progress:</strong> ${d.Progress.toFixed(1)}%<br/><strong>Status:</strong> ${d.Status}`);
+    selectedNode = target; selectedNodeElem = targetNode; originalRadius = scaleSize(target.Size);
+    d3.select(targetNode).select("circle").transition().duration(300).attr("r", originalRadius * 1.2);
+    focusBubble(target);
+    d3.select("#info-title").text(target.SubArea);
+    d3.select("#info-body").html(`<strong>Progress:</strong> ${target.Progress.toFixed(1)}%<br/><strong>Status:</strong> ${target.Status}`);
     d3.select("#info-panel").style("display", "block");
   });
-
-node.append("circle")
-  .attr("r", d => scaleSize(d.Size))
-  .attr("fill", (d, i) => `url(#grad${i})`)
-  .attr("stroke", "#fff")
-  .attr("stroke-width", 1.5);
-
-node.append("text")
-  .text(d => d.Abbrev)
-  .attr("text-anchor", "middle")
-  .attr("dy", "-0.3em")
-  .attr("font-size", d => Math.max(8, scaleSize(d.Size) / 2.5) + "px")
-  .attr("fill", "#111")
-  .style("pointer-events", "none");
-
-node.append("text")
-  .text(d => `${d.Progress.toFixed(1)}%`)
-  .attr("text-anchor", "middle")
-  .attr("dy", "1em")
-  .attr("font-size", d => Math.max(6, scaleSize(d.Size) / 3.5) + "px")
-  .attr("fill", "#111")
-  .style("pointer-events", "none");
-
-function ticked() {
-  node.each(d => {
-    d.x = Math.max(scaleSize(d.Size), Math.min(width - scaleSize(d.Size), d.x));
-    d.y = Math.max(scaleSize(d.Size), Math.min(height - scaleSize(d.Size), d.y));
-  });
-  node.attr("transform", d => `translate(${d.x},${d.y})`);
-}
-
-function focusBubble(target) {
-  node.each(function(d) {
-    d3.select(this).select("circle").transition().duration(300).style("opacity", d === target ? 1.0 : 0.1);
-  });
-  simulation.stop();
-}
-
-function resetFocus() {
-  node.each(function(d) {
-    d3.select(this).select("circle").transition().duration(300).style("opacity", 1.0);
-  });
-  simulation.alpha(0.3).restart();
-}
-
-function hideInfo() {
-  d3.select("#info-panel").style("display", "none");
-  if (selectedNode) {
-    selectedNode.fx = null;
-    selectedNode.fy = null;
-    d3.select(selectedNodeElem).select("circle").transition().duration(300).attr("r", originalRadius);
-    selectedNode = null;
-    selectedNodeElem = null;
-  }
-  resetFocus();
-}
-
-window.addEventListener("message", function(event) {
-  const abbrev = event.data;
-  const target = data.find(d => d.Abbrev === abbrev);
-  if (!target) return;
-
-  const i = data.indexOf(target);
-  const targetNode = node._groups[0][i];
-  target.fx = target.x;
-  target.fy = target.y;
-
-  if (selectedNode && selectedNode !== target) {
-    selectedNode.fx = null;
-    selectedNode.fy = null;
-    d3.select(selectedNodeElem).select("circle").transition().duration(300).attr("r", originalRadius);
-  }
-
-  selectedNode = target;
-  selectedNodeElem = targetNode;
-  originalRadius = scaleSize(target.Size);
-
-  d3.select(targetNode).select("circle").transition().duration(300).attr("r", originalRadius * 1.2);
-
-  focusBubble(target);
-
-  d3.select("#info-title").text(target.SubArea);
-  d3.select("#info-body").html(`<strong>Progress:</strong> ${target.Progress.toFixed(1)}%<br/><strong>Status:</strong> ${target.Status}`);
-  d3.select("#info-panel").style("display", "block");
-});
 </script>
 </body>
 </html>
