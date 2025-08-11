@@ -1592,7 +1592,7 @@ def main():
 <div style="display:flex; flex-direction:row; width:100%; justify-content:center;">
 
   <!-- BUBBLE CHART AREA -->
-  <div style="flex:1; width:100%; position:relative;">
+  <div style="flex:1 1 auto; min-width:0; position:relative;">
     <svg viewBox="0 0 1800 1200" width="100%" height="1000" preserveAspectRatio="xMidYMid meet"></svg>
 
     <!-- Panel Info -->
