@@ -409,6 +409,11 @@ if payment_term_file:
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
 
+     # --- Pastikan kolom numerik ---
+    df_terms['AMOUNT'] = pd.to_numeric(df_terms['AMOUNT'], errors='coerce').fillna(0)
+    df_terms['TOTAL_CONTRACT_VALUE'] = pd.to_numeric(df_terms['TOTAL_CONTRACT_VALUE'], errors='coerce').fillna(0)
+
+
     # --- Filter Paid Terms ---
     df_paid = df_terms[df_terms['STATUS'].str.upper() == 'PAID'].copy()
 
