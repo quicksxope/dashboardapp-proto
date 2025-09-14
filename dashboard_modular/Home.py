@@ -198,17 +198,24 @@ if project_file:
 if contract_file:
     df = pd.read_excel(contract_file)
     df.columns = df.columns.str.strip()
+
+    # --- Rename kolom ---
     df.rename(columns={
         'Start Date': 'START',
         'End Date': 'END',
         'PROGRESS ACTUAL': 'PROGRESS',
-        'Nilai Kontrak 2023-2024': 'CONTRACT_VALUE',
-        'Realisasi On  2023-2024': 'REALIZATION',
+        'Nilai Kontrak 2023-2024': 'CONTRACT_VALUE',   # kontrak hanya 2023-2024
+        'Realisasi On  2023-2024': 'REALIZATION_2324',
+        'Realisasi On 2025': 'REALIZATION_2025',
         '% Realisasi': 'REALIZED_PCT',
         'TIME GONE %': 'TIME_PCT',
         'STATUS': 'STATUS'
     }, inplace=True)
 
+    # --- Realisasi total (2023-2024 + 2025) ---
+    df['REALIZATION'] = df[['REALIZATION_2324', 'REALIZATION_2025']].sum(axis=1, skipna=True)
+
+    # --- Konversi tipe data ---
     df['START'] = pd.to_datetime(df['START'], errors='coerce')
     df['END'] = pd.to_datetime(df['END'], errors='coerce')
     df['CONTRACT_VALUE'] = pd.to_numeric(df['CONTRACT_VALUE'], errors='coerce')
@@ -216,6 +223,7 @@ if contract_file:
     df['REALIZED_PCT'] = pd.to_numeric(df['REALIZED_PCT'], errors='coerce') * 100
     df['TIME_PCT'] = pd.to_numeric(df['TIME_PCT'], errors='coerce') * 100
 
+    # --- Summary metrics ---
     total_contracts = len(df)
     avg_realized_pct = df['REALIZED_PCT'].mean()
     completed = df[df['REALIZED_PCT'] >= 100].shape[0]
@@ -224,6 +232,7 @@ if contract_file:
     total_value = df['CONTRACT_VALUE'].sum()
     remaining = total_value - realized
     remaining_pct = (remaining / total_value) * 100 if total_value else 0
+
 
     st.subheader("📁 Contract Performance Summary")
     col1, col2, col3, col4 = st.columns(4)
