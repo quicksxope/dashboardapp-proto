@@ -232,7 +232,7 @@ if contract_file:
             'Realisasi On  2023-2024': 'REALIZATION_2324',
             'Realisasi On 2025': 'REALIZATION_2025',
         }, inplace=True)
-        df['REALIZATION'] = df[['REALIZATION_2324', 'REALIZATION_2025']].sum(axis=1, skipna=True)
+        df_chart['REALIZATION'] = df[['REALIZATION_2324', 'REALIZATION_2025']].sum(axis=1, skipna=True)
 
         df_chart = df_chart[df_chart['CONTRACT_VALUE'].notna() & df_chart['REALIZATION'].notna()].copy()
         df_chart['REMAINING'] = df_chart['CONTRACT_VALUE'] - df_chart['REALIZATION']
