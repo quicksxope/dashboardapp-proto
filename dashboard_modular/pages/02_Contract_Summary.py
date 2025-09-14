@@ -232,12 +232,18 @@ if contract_file:
             'Realisasi On  2023-2024': 'REALIZATION_2324',
             'Realisasi On 2025': 'REALIZATION_2025',
         }, inplace=True)
-        df_chart['REALIZATION'] = df[['REALIZATION_2324', 'REALIZATION_2025']].sum(axis=1, skipna=True)
-
+        
+        # handle REALIZATION kolom dengan aman
+        cols = [c for c in ['REALIZATION_2324', 'REALIZATION_2025'] if c in df_chart.columns]
+        df_chart['REALIZATION'] = df_chart[cols].sum(axis=1, skipna=True) if cols else 0
+        
+        # bersihkan data yang valid
         df_chart = df_chart[df_chart['CONTRACT_VALUE'].notna() & df_chart['REALIZATION'].notna()].copy()
         df_chart['REMAINING'] = df_chart['CONTRACT_VALUE'] - df_chart['REALIZATION']
         df_chart[['REALIZATION', 'REMAINING']] = df_chart[['REALIZATION', 'REMAINING']].clip(lower=0)
         df_chart['REALIZED_PCT'] = (df_chart['REALIZATION'] / df_chart['CONTRACT_VALUE'] * 100).round(1)
+        
+        # urutkan kontrak terbesar ke terkecil
         df_chart.sort_values(by='CONTRACT_VALUE', ascending=False, inplace=True)
 
         # Split top 5 and others
