@@ -211,10 +211,10 @@ if contract_file:
         'TIME GONE %': 'TIME_PCT',
         'STATUS': 'STATUS'
     }, inplace=True)
-
+    
     # --- Realisasi total (2023-2024 + 2025) ---
     df['REALIZATION'] = df[['REALIZATION_2324', 'REALIZATION_2025']].sum(axis=1, skipna=True)
-
+    
     # --- Konversi tipe data ---
     df['START'] = pd.to_datetime(df['START'], errors='coerce')
     df['END'] = pd.to_datetime(df['END'], errors='coerce')
@@ -222,17 +222,20 @@ if contract_file:
     df['REALIZATION'] = pd.to_numeric(df['REALIZATION'], errors='coerce')
     df['REALIZED_PCT'] = pd.to_numeric(df['REALIZED_PCT'], errors='coerce') * 100
     df['TIME_PCT'] = pd.to_numeric(df['TIME_PCT'], errors='coerce') * 100
-
+    
     # --- Summary metrics ---
     total_contracts = len(df)
     avg_realized_pct = df['REALIZED_PCT'].mean()
     completed = df[df['REALIZED_PCT'] >= 100].shape[0]
     active_contracts = df[df['STATUS'].str.contains("ACTIVE", case=False, na=False)].shape[0]
     realized = df['REALIZATION'].sum()
-    total_value = df['CONTRACT_VALUE'].sum()
+    
+    # 👉 Logic: kalau CONTRACT_VALUE duplikat, hanya dihitung sekali
+    unique_contracts = df.drop_duplicates(subset=['CONTRACT_VALUE'], keep='first')
+    total_value = unique_contracts['CONTRACT_VALUE'].sum()
+    
     remaining = total_value - realized
     remaining_pct = (remaining / total_value) * 100 if total_value else 0
-
 
     st.subheader("📁 Contract Performance Summary")
     col1, col2, col3, col4 = st.columns(4)
