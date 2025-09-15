@@ -121,7 +121,7 @@ if contract_file:
     # mapping typo ke status standar
     status_map = {
         "acctive": "active",
-        "acctive adendum": "active adendum",
+        "acctive addendum": "active adendum",
     }
     
     df['STATUS'] = df['STATUS'].replace(status_map)
