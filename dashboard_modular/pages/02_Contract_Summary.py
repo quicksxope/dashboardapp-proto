@@ -137,11 +137,14 @@ if contract_file:
     today = pd.Timestamp.today()
     df['TIME_GONE'] = ((today - df['START']) / (df['END'] - df['START'])).clip(0, 1) * 100
 
-    # --- Metrics ---
+        # --- Metrics ---
     total_contracts = len(df)
-    active_contracts = df[df['STATUS'] == 'active'].shape[0]
-    non_active_contracts = df[df['STATUS'].str.contains('NON ACTIVE', case=False, na=False)].shape[0]
-    active_adendum_contracts = df[df['STATUS'].str.contains("ADENDUM", na=False, case=False)].shape[0]
+    active_contracts = df[df['STATUS'].str.contains('active', case=False, na=False) &
+                          ~df['STATUS'].str.contains('adendum', case=False, na=False)].shape[0]
+    
+    non_active_contracts = df[df['STATUS'].str.contains('non active', case=False, na=False)].shape[0]
+    
+    active_adendum_contracts = df[df['STATUS'].str.contains('adendum', case=False, na=False)].shape[0]
 
     col1, col2 = st.columns(2)
     with col1:
