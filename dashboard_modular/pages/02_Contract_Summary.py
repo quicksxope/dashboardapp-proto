@@ -269,32 +269,46 @@ if contract_file:
                 'displayModeBar': 'always'
             })
 
-        # --- Vendor Breakdown Grouped Bar ---
+                # --- Vendor Breakdown Grouped Bar ---
         with section_card("🏢 Contracts by Vendor"):
             df_vendor = df_chart.copy()
             df_vendor.rename(columns={'Ket.': 'VENDOR'}, inplace=True)
-        
-            # filter vendor valid
             df_vendor = df_vendor[df_vendor['VENDOR'].notna()]
         
             fig_vendor = px.bar(
                 df_vendor,
                 y="VENDOR",
                 x="CONTRACT_VALUE",
-                color="KONTRAK",   # tiap kontrak beda warna
+                color="KONTRAK",
                 orientation="h",
                 title="Contracts Breakdown by Vendor",
                 hover_data=["KONTRAK", "REALIZATION", "REMAINING", "REALIZED_PCT"],
             )
         
+            # --- tweak style ---
+            fig_vendor.update_traces(
+                hovertemplate=(
+                    "<b>Vendor:</b> %{y}<br>"
+                    "<b>Contract:</b> %{customdata[0]}<br>"
+                    "<b>Total Value:</b> %{x:.1f} M<br>"
+                    "<b>Realized:</b> %{customdata[1]:.1f} M<br>"
+                    "<b>Remaining:</b> %{customdata[2]:.1f} M<br>"
+                    "<b>% Realized:</b> %{customdata[3]}%"
+                ),
+                marker=dict(line=dict(width=0))
+            )
+        
             fig_vendor.update_layout(
-                barmode="group",  # grouped bar
+                barmode="group",
+                bargap=0.2,        # jarak antar kontrak
+                bargroupgap=0.05,  # jarak antar vendor
                 yaxis=dict(automargin=True),
-                height=800,
+                height=1200,       # lebih tinggi biar bar nggak gepeng
                 margin=dict(l=300, r=50, t=60, b=50),
             )
         
             st.plotly_chart(fig_vendor, use_container_width=True)
+
 
 
 
