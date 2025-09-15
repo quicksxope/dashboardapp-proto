@@ -224,11 +224,14 @@ if contract_file:
     df['TIME_PCT'] = pd.to_numeric(df['TIME_PCT'], errors='coerce') * 100
     
     # --- Summary metrics ---
-    total_contracts = len(df)
+    
     avg_realized_pct = df['REALIZED_PCT'].mean()
     completed = df[df['REALIZED_PCT'] >= 100].shape[0]
-    active_contracts = df[df['STATUS'].str.contains("ACTIVE", case=False, na=False)].shape[0]
     realized = df['REALIZATION'].sum()
+    total_contracts = len(df)
+    active_contracts = df[df['STATUS'].str.contains('active', case=False, na=False) &
+                          ~df['STATUS'].str.contains('adendum', case=False, na=False)].shape[0]
+    
     
     # 👉 Logic: kalau CONTRACT_VALUE duplikat, hanya dihitung sekali
     unique_contracts = df.drop_duplicates(subset=['CONTRACT_VALUE'], keep='first')
