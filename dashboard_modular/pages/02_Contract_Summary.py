@@ -269,6 +269,34 @@ if contract_file:
                 'displayModeBar': 'always'
             })
 
+        # --- Vendor Breakdown Grouped Bar ---
+        with section_card("🏢 Contracts by Vendor"):
+            df_vendor = df_chart.copy()
+            df_vendor.rename(columns={'Ket.': 'VENDOR'}, inplace=True)
+        
+            # filter vendor valid
+            df_vendor = df_vendor[df_vendor['VENDOR'].notna()]
+        
+            fig_vendor = px.bar(
+                df_vendor,
+                y="VENDOR",
+                x="CONTRACT_VALUE",
+                color="KONTRAK",   # tiap kontrak beda warna
+                orientation="h",
+                title="Contracts Breakdown by Vendor",
+                hover_data=["KONTRAK", "REALIZATION", "REMAINING", "REALIZED_PCT"],
+            )
+        
+            fig_vendor.update_layout(
+                barmode="group",  # grouped bar
+                yaxis=dict(automargin=True),
+                height=800,
+                margin=dict(l=300, r=50, t=60, b=50),
+            )
+        
+            st.plotly_chart(fig_vendor, use_container_width=True)
+
+
 
        
 
