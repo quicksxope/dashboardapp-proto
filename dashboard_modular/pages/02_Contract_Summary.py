@@ -139,7 +139,7 @@ if contract_file:
 
     # --- Metrics ---
     total_contracts = len(df)
-    active_contracts = df[df['STATUS'] == 'ACTIVE'].shape[0]
+    active_contracts = df[df['STATUS'] == 'active'].shape[0]
     non_active_contracts = df[df['STATUS'].str.contains('NON ACTIVE', case=False, na=False)].shape[0]
     active_adendum_contracts = df[df['STATUS'].str.contains("ADENDUM", na=False, case=False)].shape[0]
 
