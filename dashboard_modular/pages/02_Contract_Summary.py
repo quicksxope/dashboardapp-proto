@@ -115,6 +115,19 @@ if contract_file:
         'End Date': 'END',
         'PROGRESS ACTUAL': 'PROGRESS'
     }, inplace=True)
+        # --- Normalisasi STATUS ---
+    df['STATUS'] = df['STATUS'].str.strip().str.lower()
+    
+    # mapping typo ke status standar
+    status_map = {
+        "acctive": "active",
+        "acctive adendum": "active adendum",
+    }
+    
+    df['STATUS'] = df['STATUS'].replace(status_map)
+    
+    # Balikin kapitalisasi biar rapi
+    df['STATUS'] = df['STATUS'].str.title()
 
     df['START'] = pd.to_datetime(df['START'], errors='coerce')
     df['END'] = pd.to_datetime(df['END'], errors='coerce')
