@@ -2,8 +2,8 @@ import streamlit as st
 
 USERS = {
     'admin': {'password': 'admin123', 'role': 'admin'},
-    'john': {'password': 'john123', 'role': 'viewer'},
-    'sarah': {'password': 'sarahpass', 'role': 'editor'}
+    'inca': {'password': 'inca2025', 'role': 'admin'},
+    
 }
 
 def authenticate(username, password):
