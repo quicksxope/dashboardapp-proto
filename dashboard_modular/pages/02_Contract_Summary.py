@@ -471,15 +471,20 @@ if payment_term_file:
 
     # --- Load dan format dasar ---
     df_terms = pd.read_excel(payment_term_file)
+        # --- Clean awal ---
     df_terms.columns = df_terms.columns.str.strip().str.upper()
     df_terms['START_DATE'] = pd.to_datetime(df_terms['START_DATE'], errors='coerce')
     df_terms['END_DATE'] = pd.to_datetime(df_terms['END_DATE'], errors='coerce')
-
-     # --- Pastikan kolom numerik ---
-    # pastiin TERM_NO numeric
+    
+    # Pastikan numeric
     df_terms['TERM_NO'] = pd.to_numeric(df_terms['TERM_NO'], errors='coerce')
-
-
+    df_terms['AMOUNT'] = pd.to_numeric(
+        df_terms['AMOUNT'].astype(str).str.replace(',', ''), errors='coerce'
+    )
+    
+    # Biar aman status kosong jadi string kosong
+    df_terms['STATUS'] = df_terms['STATUS'].fillna('')
+    df_terms['CONTRACT_STATUS'] = df_terms['CONTRACT_STATUS'].fillna("NO_STATUS")
 
 
 
