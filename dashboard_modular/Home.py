@@ -276,7 +276,7 @@ if contract_file:
 
 
 if payment_term_file:
-    df_terms = pd.read_excel(payment_term_file)
+    df_terms = pd.read_excel(payment_term_file, sheet_name="Sheet1")
     df_terms.columns = df_terms.columns.str.strip().str.upper()
     df_terms['STATUS'] = df_terms['STATUS'].str.upper()
     df_terms['VENDOR'] = df_terms['VENDOR'].str.strip()
