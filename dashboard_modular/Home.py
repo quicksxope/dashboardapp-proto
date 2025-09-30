@@ -205,8 +205,8 @@ if contract_file:
         'End Date': 'END',
         'PROGRESS ACTUAL': 'PROGRESS',
         'Nilai Kontrak 2023-2024': 'CONTRACT_VALUE',   # kontrak hanya 2023-2024
-        'Realisasi_On_2023-2024': 'REALIZATION_2324',
-        'Realisasi_On_2025': 'REALIZATION_2025',
+        'Realisasi On  2023-2024': 'REALIZATION_2324',
+        'Realisasi On  2025': 'REALIZATION_2025',
         '% Realisasi': 'REALIZED_PCT',
         'TIME GONE %': 'TIME_PCT',
         'STATUS': 'STATUS'
