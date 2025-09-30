@@ -21,15 +21,7 @@ project_file = get_file(
     "project_file"
 )
 
-if project_file is None:
-    st.error("❌ Gagal ambil file kontrak. Pastikan file ada di GitHub atau upload manual.")
-    st.stop()
 
-try:
-    df = pd.read_excel(contract_file)
-except Exception as e:
-    st.error(f"⚠️ Gagal baca file kontrak: {e}")
-    st.stop()
 
 
 contract_file = get_file(
@@ -38,15 +30,6 @@ contract_file = get_file(
     "contract_file"
 )
 
-if contract_file is None:
-    st.error("❌ Gagal ambil file kontrak. Pastikan file ada di GitHub atau upload manual.")
-    st.stop()
-
-try:
-    df = pd.read_excel(contract_file)
-except Exception as e:
-    st.error(f"⚠️ Gagal baca file kontrak: {e}")
-    st.stop()
 
 
 # --- Load Payment Term Data ---
@@ -56,15 +39,7 @@ payment_term_file = get_file(
     "payment_term_file"
 )
 
-if payment_term_file is None:
-    st.error("❌ Gagal ambil file kontrak. Pastikan file ada di GitHub atau upload manual.")
-    st.stop()
 
-try:
-    df = pd.read_excel(contract_file)
-except Exception as e:
-    st.error(f"⚠️ Gagal baca file kontrak: {e}")
-    st.stop()
 
 
 st.markdown("""
@@ -240,6 +215,13 @@ if contract_file:
         'TIME GONE %': 'TIME_PCT',
         'STATUS': 'STATUS'
     }, inplace=True)
+    if contract_file is not None:
+    try:
+        df_contract = pd.read_excel(contract_file, sheet_name=0)  # sheet pertama
+    except Exception as e:
+        st.error(f"⚠️ Gagal baca file kontrak: {e}")
+
+
     
     # --- Realisasi total (2023-2024 + 2025) ---
     df['REALIZATION'] = df[['REALIZATION_2324', 'REALIZATION_2025']].sum(axis=1, skipna=True)
