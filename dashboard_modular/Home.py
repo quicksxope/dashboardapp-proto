@@ -21,12 +21,32 @@ project_file = get_file(
     "project_file"
 )
 
+if project_file is None:
+    st.error("❌ Gagal ambil file kontrak. Pastikan file ada di GitHub atau upload manual.")
+    st.stop()
+
+try:
+    df = pd.read_excel(contract_file)
+except Exception as e:
+    st.error(f"⚠️ Gagal baca file kontrak: {e}")
+    st.stop()
+
 
 contract_file = get_file(
     "quicksxope/dashboardapp-proto/contents/data/data_kontrak_new.xlsx",
     "📁 Upload Contract Data",
     "contract_file"
 )
+
+if contract_file is None:
+    st.error("❌ Gagal ambil file kontrak. Pastikan file ada di GitHub atau upload manual.")
+    st.stop()
+
+try:
+    df = pd.read_excel(contract_file)
+except Exception as e:
+    st.error(f"⚠️ Gagal baca file kontrak: {e}")
+    st.stop()
 
 
 # --- Load Payment Term Data ---
@@ -36,6 +56,15 @@ payment_term_file = get_file(
     "payment_term_file"
 )
 
+if payment_term_file is None:
+    st.error("❌ Gagal ambil file kontrak. Pastikan file ada di GitHub atau upload manual.")
+    st.stop()
+
+try:
+    df = pd.read_excel(contract_file)
+except Exception as e:
+    st.error(f"⚠️ Gagal baca file kontrak: {e}")
+    st.stop()
 
 
 st.markdown("""
