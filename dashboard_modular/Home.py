@@ -202,12 +202,6 @@ if project_file:
 if contract_file:
     df = pd.read_excel(contract_file)
     df.columns = df.columns.str.strip()
-    if contract_file is not None:
-    try:
-        df_contract = pd.read_excel(contract_file, sheet_name=0)  # sheet pertama
-    except Exception as e:
-        st.error(f"⚠️ Gagal baca file kontrak: {e}")
-
 
     # --- Rename kolom ---
     df.rename(columns={
