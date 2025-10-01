@@ -636,7 +636,7 @@ if payment_term_file:
     with section_card("📋 Tabel Transaksi Lengkap (Filter Tanggal Transaksi)"):
         st.subheader("📅 Filter Tanggal Transaksi")
     
-        if 'TANGGAL_TRANSAKSI' in df_terms.columns:
+        if 'PAYMENT_DATE' in df_terms.columns:
             df_terms['PAYMENT_DATE'] = pd.to_datetime(df_terms['PAYMENT_DATE'], errors='coerce')
             df_valid = df_terms[df_terms['PAYMENT_DATE'].notna()].copy()
     
