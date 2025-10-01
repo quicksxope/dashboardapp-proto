@@ -637,14 +637,14 @@ if payment_term_file:
         st.subheader("📅 Filter Tanggal Transaksi")
     
         if 'TANGGAL_TRANSAKSI' in df_terms.columns:
-            df_terms['TANGGAL_TRANSAKSI'] = pd.to_datetime(df_terms['TANGGAL_TRANSAKSI'], errors='coerce')
-            df_valid = df_terms[df_terms['TANGGAL_TRANSAKSI'].notna()].copy()
+            df_terms['PAYMENT_DATE'] = pd.to_datetime(df_terms['PAYMENT_DATE'], errors='coerce')
+            df_valid = df_terms[df_terms['PAYMENT_DATE'].notna()].copy()
     
             if df_valid.empty:
                 st.warning("Tidak ada data dengan tanggal transaksi yang valid.")
             else:
-                min_date = df_valid['TANGGAL_TRANSAKSI'].min().date()
-                max_date = df_valid['TANGGAL_TRANSAKSI'].max().date()
+                min_date = df_valid['PAYMENT_DATE'].min().date()
+                max_date = df_valid['PAYMENT_DATE'].max().date()
     
                 # Pilih tanggal dengan default range
                 date_range = st.date_input(
@@ -662,13 +662,13 @@ if payment_term_file:
                     start_dt = end_dt = pd.Timestamp(date_range)
     
                 # Filter berdasarkan tanggal
-                mask = (df_valid['TANGGAL_TRANSAKSI'] >= start_dt) & (df_valid['TANGGAL_TRANSAKSI'] <= end_dt)
+                mask = (df_valid['PAYMENT_DATE'] >= start_dt) & (df_valid['PAYMENT_DATE'] <= end_dt)
                 filtered_df = df_valid[mask]
     
                 if filtered_df.empty:
                     st.info("Tidak ada transaksi dalam rentang tanggal yang dipilih.")
                 else:
-                    filtered_display = filtered_df[['VENDOR', 'AMOUNT', 'STATUS', 'TANGGAL_TRANSAKSI']]
+                    filtered_display = filtered_df[['VENDOR', 'AMOUNT', 'STATUS', 'PAYMENT_DATE']]
                     st.dataframe(filtered_display, use_container_width=True)
         else:
             st.warning("Kolom 'TANGGAL_TRANSAKSI' tidak ditemukan di data.")
