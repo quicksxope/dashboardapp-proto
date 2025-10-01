@@ -546,11 +546,18 @@ if payment_term_file:
     df_terms['VENDOR_DISPLAY'] = df_terms.apply(generate_display_name, axis=1)
 
     # --- Hitung tanggal pembayaran ---
-    df_terms['PAYMENT_DATE'] = df_terms.apply(
-        lambda row: row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1), axis=1
-    )
+    def calc_payment_date(row):
+        try:
+            if pd.isna(row['TERM_NO']) or pd.isna(row['START_DATE']):
+                return pd.NaT
+            return row['START_DATE'] + pd.DateOffset(months=int(row['TERM_NO']) - 1)
+        except Exception:
+            return pd.NaT
+    
+    df_terms['PAYMENT_DATE'] = df_terms.apply(calc_payment_date, axis=1)
     df_terms['PAYMENT_DATE'] = df_terms['PAYMENT_DATE'].dt.to_period('M').dt.to_timestamp()
     df_terms['END_DATE'] = df_terms['PAYMENT_DATE'] + pd.offsets.MonthEnd(0)
+
 
     # --- Assign warna status ---
     def assign_color(status):
