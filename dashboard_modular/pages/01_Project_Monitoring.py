@@ -111,6 +111,7 @@ def load_data(file):
     # Load the main data sheet
     df = pd.read_excel(file, sheet_name="BASE DATA (wajib update)")
     df.columns = df.columns.str.strip()
+    df['START'] = pd.to_datetime(df['START'], errors='coerce')
     
     # Clean text columns
     for col in ['KONTRAK', 'JENIS PEKERJAAN', 'STATUS']:
