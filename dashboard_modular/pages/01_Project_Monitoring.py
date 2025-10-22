@@ -565,25 +565,7 @@ def main():
     # Add spacing after cards
     st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
 
-    # --- Weighted Progress ---
-    with section_card("🎯 Weighted Progress by Bobot × % Complete (All Projects)"):
-        colA, colB, colC, colD = st.columns(4)
-        for project, col in zip(['PROJECT 1 A', 'PROJECT 1 B', 'PROJECT EBS', 'PROJECT ADT'], [colA, colB, colC, colD]):
-            proj_df = original_df[original_df['KONTRAK'] == project]
-            if not proj_df.empty:
-                weighted = (proj_df['BOBOT'] * proj_df['% COMPLETE']).sum()
-                total_bobot = proj_df['BOBOT'].sum()
-                progress = (weighted / total_bobot) if total_bobot else 0
-                with col:
-                    st.markdown(f"**📌 {project}**")
-                    st.progress(int(progress))
-                    st.caption(f"Progress: **{progress:.2f}%**")
-            else:
-                with col:
-                    st.markdown(f"**📌 {project}**")
-                    st.info("No data available.")
-
-    # --- Timeline & Task Table ---
+   # --- Timeline & Task Table ---
     with section_card("🗓 Project Timeline"):
         # Define color map
         color_map = {
@@ -591,93 +573,102 @@ def main():
             'DALAM PROSES': 'blue',
             'TUNDA': 'orange',
             'BELUM MULAI': 'yellow',
-            'TERLAMBAT' : 'red'
+            'TERLAMBAT': 'red'
         }
-        
+    
         # Project filter buttons with visual indicators
         st.write("Filter Timeline by Project:")
-        
+    
         # Use session state to track the active filter
         if 'active_project_filter' not in st.session_state:
             st.session_state.active_project_filter = 'all'
-            
+    
         # Reset button state flags on each run
         if 'button_clicked_this_run' not in st.session_state:
             st.session_state.button_clicked_this_run = False
-            
-        # Callback functions to update session state for each button
+    
+        # --- Callback functions ---
         def set_all_filter():
             st.session_state.active_project_filter = 'all'
             st.session_state.button_clicked_this_run = True
-            
+    
         def set_p1a_filter():
             st.session_state.active_project_filter = 'p1a'
             st.session_state.button_clicked_this_run = True
-            
+    
         def set_p1b_filter():
             st.session_state.active_project_filter = 'p1b'
             st.session_state.button_clicked_this_run = True
-            
-        # Define button styles based on active state
-        active_style = """
-            background: linear-gradient(to right, #3498db, #1abc9c);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            margin: 5px 0;
-            width: 100%;
-        """
-        
-        inactive_style = """
-            background: #f0f2f6;
-            color: #31333F;
-            border: 1px solid #e0e0e0;
-            padding: 8px 16px;
-            border-radius: 5px;
-            font-weight: normal;
-            margin: 5px 0;
-            width: 100%;
-        """
-        
-        # Column layout for buttons - more balanced layout on mobile (will stack nicely)
-        timeline_col1, timeline_col2, timeline_col3 = st.columns([1, 1, 1])
-        
-        # Render single buttons with appropriate styles for each filter option
-        with timeline_col1:
+    
+        def set_ebs_filter():
+            st.session_state.active_project_filter = 'ebs'
+            st.session_state.button_clicked_this_run = True
+    
+        def set_adt_filter():
+            st.session_state.active_project_filter = 'adt'
+            st.session_state.button_clicked_this_run = True
+    
+        # --- Layout Buttons (2 rows × 3 columns for balance) ---
+        row1_col1, row1_col2, row1_col3 = st.columns(3)
+        row2_col1, row2_col2, _ = st.columns([1, 1, 1])
+    
+        # --- Row 1 ---
+        with row1_col1:
             all_active = st.session_state.active_project_filter == 'all'
             if st.button(
-                f"{'✓ ' if all_active else ''}All Projects", 
+                f"{'✓ ' if all_active else ''}All Projects",
                 key="all_timeline",
                 on_click=set_all_filter,
                 type="primary" if all_active else "secondary",
                 use_container_width=True
             ):
                 st.rerun()
-            
-        with timeline_col2:
+    
+        with row1_col2:
             p1a_active = st.session_state.active_project_filter == 'p1a'
             if st.button(
-                f"{'✓ ' if p1a_active else ''}PROJECT 1 A", 
+                f"{'✓ ' if p1a_active else ''}PROJECT 1 A",
                 key="p1a_timeline",
                 on_click=set_p1a_filter,
                 type="primary" if p1a_active else "secondary",
                 use_container_width=True
             ):
                 st.rerun()
-            
-        with timeline_col3:
+    
+        with row1_col3:
             p1b_active = st.session_state.active_project_filter == 'p1b'
             if st.button(
-                f"{'✓ ' if p1b_active else ''}PROJECT 1 B", 
+                f"{'✓ ' if p1b_active else ''}PROJECT 1 B",
                 key="p1b_timeline",
                 on_click=set_p1b_filter,
                 type="primary" if p1b_active else "secondary",
                 use_container_width=True
             ):
                 st.rerun()
+    
+        # --- Row 2 ---
+        with row2_col1:
+            ebs_active = st.session_state.active_project_filter == 'ebs'
+            if st.button(
+                f"{'✓ ' if ebs_active else ''}PROJECT EBS",
+                key="ebs_timeline",
+                on_click=set_ebs_filter,
+                type="primary" if ebs_active else "secondary",
+                use_container_width=True
+            ):
+                st.rerun()
+    
+        with row2_col2:
+            adt_active = st.session_state.active_project_filter == 'adt'
+            if st.button(
+                f"{'✓ ' if adt_active else ''}PROJECT ADT",
+                key="adt_timeline",
+                on_click=set_adt_filter,
+                type="primary" if adt_active else "secondary",
+                use_container_width=True
+            ):
+                st.rerun()
+
         
         # Initialize view tabs for timeline features
         timeline_tabs = st.tabs(["🗓️ Gantt Chart", "📊 S-Curve", "📝 Task Details"])
