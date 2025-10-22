@@ -1253,28 +1253,40 @@ def main():
     
         with c2:
             pending_df = filtered_df[filtered_df['STATUS'].isin(['TUNDA', 'BELUM MULAI'])]
-            if not pending_df.empty:
-                pending_count = pending_df['KONTRAK'].value_counts().reset_index()
-                pending_count.columns = ['KONTRAK', 'Pending Count']
-                fig_pending = px.bar(
-                    pending_count,
-                    x='Pending Count',
-                    y='KONTRAK',
-                    orientation='h',
-                    text='Pending Count',
-                    title=f"Projects with Pending Tasks ({active_filter.upper() if active_filter != 'all' else 'ALL'})",
-                    color='Pending Count',
-                    color_continuous_scale='Oranges'
-                )
-                fig_pending.update_layout(
-                    yaxis_title="Project",
-                    xaxis_title="Pending Tasks",
-                    height=400,
-                    margin=dict(l=40, r=10, t=40, b=40)
-                )
-                st.plotly_chart(fig_pending, use_container_width=True)
-            else:
-                st.info("No 'Tunda' or 'Belum Mulai' tasks to display for selected project.")
+    
+            # Semua project yang harus ditampilkan
+            all_projects = ['PROJECT 1 A', 'PROJECT 1 B', 'PROJECT EBS', 'PROJECT ADT']
+    
+            # Hitung pending per project
+            pending_count = pending_df['KONTRAK'].value_counts().reindex(all_projects, fill_value=0).reset_index()
+            pending_count.columns = ['KONTRAK', 'Pending Count']
+    
+            fig_pending = px.bar(
+                pending_count,
+                x='Pending Count',
+                y='KONTRAK',
+                orientation='h',
+                text='Pending Count',
+                title=f"Projects with Pending Tasks ({active_filter.upper() if active_filter != 'all' else 'ALL'})",
+                color='Pending Count',
+                color_continuous_scale='Oranges'
+            )
+    
+            fig_pending.update_traces(
+                texttemplate='%{text}', 
+                textposition='outside',
+                hovertemplate='Project: %{y}<br>Pending: %{x}<extra></extra>'
+            )
+    
+            fig_pending.update_layout(
+                yaxis_title="Project",
+                xaxis_title="Pending Tasks",
+                height=400,
+                margin=dict(l=40, r=10, t=40, b=40)
+            )
+    
+            st.plotly_chart(fig_pending, use_container_width=True)
+
 
 
 
