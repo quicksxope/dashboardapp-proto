@@ -163,30 +163,55 @@ remaining_pct = 0.0
 
 if project_file:
     excel = pd.ExcelFile(project_file)
-    print(excel.sheet_names)  # buat ngecek nama-nama sheet
+    print(excel.sheet_names)  # Debug: cek nama-nama sheet
 
-    # pilih sheet yang isinya gak kosong
+    # --- Baca sheet utama ---
     dfp = pd.read_excel(excel, sheet_name="BASE DATA (wajib update)")
     dfp.columns = dfp.columns.str.strip().str.upper()
 
-    # pastikan kolom 'KONTRAK' memang ada
-    if 'KONTRAK' in dfp.columns:
-        dfp['KONTRAK'] = dfp['KONTRAK'].astype(str).str.upper().str.strip()
+    # --- Validasi kolom penting ---
+    required_cols = ['KONTRAK', 'STATUS', '% COMPLETE', 'START', 'PLAN END']
+    missing_cols = [col for col in required_cols if col not in dfp.columns]
+
+    if missing_cols:
+        st.error(f"Kolom berikut tidak ditemukan di file Excel: {', '.join(missing_cols)}")
+    else:
+        # --- Normalisasi data ---
         dfp['KONTRAK'] = dfp['KONTRAK'].astype(str).str.upper().str.strip()
         dfp['STATUS'] = dfp['STATUS'].astype(str).str.upper().str.strip()
+
+        # pastikan % COMPLETE dalam 0–100
+        dfp['% COMPLETE'] = pd.to_numeric(dfp['% COMPLETE'], errors='coerce').fillna(0)
         dfp['% COMPLETE'] = dfp['% COMPLETE'].apply(lambda x: x * 100 if x <= 1 else x)
+
         dfp['START'] = pd.to_datetime(dfp['START'], errors='coerce')
         dfp['PLAN END'] = pd.to_datetime(dfp['PLAN END'], errors='coerce')
-    
+
+        today = pd.Timestamp.today()
+
+        # --- Hitung metrik utama ---
         total_projects = dfp['KONTRAK'].nunique()
-        avg_completion = dfp['% COMPLETE'].mean()
         total_tasks = len(dfp)
-        on_time = ((dfp['PLAN END'] >= pd.Timestamp.today()) & (dfp['STATUS'] == 'SELESAI')).sum()
-        overdue = ((dfp['PLAN END'] < pd.Timestamp.today()) & (dfp['STATUS'] != 'SELESAI')).sum()
+        avg_completion = dfp['% COMPLETE'].mean()
+
+        # Task selesai tepat waktu
+        on_time = dfp[
+            (dfp['STATUS'] == 'SELESAI') &
+            (dfp['PLAN END'] >= today)
+        ].shape[0]
+
+        # Task overdue: sudah lewat PLAN END + belum selesai 100%
+        overdue = dfp[
+            (dfp['PLAN END'] < today) &
+            (dfp['% COMPLETE'] < 100)
+        ].shape[0]
+
         completed_tasks = dfp[dfp['STATUS'] == 'SELESAI'].shape[0]
         overdue_rate = (overdue / total_tasks) * 100 if total_tasks else 0
-    
+
+        # --- Tampilkan hasil ---
         st.subheader("🏗️ Project Monitoring Summary")
+
         col1, col2, col3 = st.columns(3)
         with col1:
             render_card("Total Projects", total_projects, "Unique KONTRAK", "#fef9c3", "📁")
@@ -194,17 +219,19 @@ if project_file:
             render_card("Total Tasks", total_tasks, "Rows of activities", "#dcfce7", "📝")
         with col3:
             render_card("Overdue Tasks", overdue, "Past due", "#fde68a", "⚠️")
-    
-        col4, col5, col6 = st.columns(3)
+
+        col4, col5, _ = st.columns(3)
         with col4:
             render_card("On-Time Tasks", on_time, "Completed on-time", "#bae6fd", "⏱️")
         with col5:
             render_card("Completed Tasks", completed_tasks, f"of {total_tasks} total", "#d1fae5", "✅")
+
         col1, col2 = st.columns(2)
         with col1:
             render_progress_card("Avg Completion %", avg_completion, "#60a5fa", "🛠️")
         with col2:
             render_progress_card("Overdue Rate", overdue_rate, "#f87171", "⏰")
+
             
 
 if contract_file:
