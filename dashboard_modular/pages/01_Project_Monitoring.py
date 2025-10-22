@@ -1216,23 +1216,43 @@ def main():
     
     # Task details are now in the interactive task details tab
 
-   # --- Status Pie & Pending Chart ---
+  # --- Status Pie & Pending Chart ---
     with section_card("📊 Task Distribution & Issues"):
+        # Apply project filter based on session state
+        active_filter = st.session_state.get("active_project_filter", "all")
+    
+        if active_filter == "p1a":
+            filtered_df = df[df['KONTRAK'] == 'PROJECT 1 A']
+        elif active_filter == "p1b":
+            filtered_df = df[df['KONTRAK'] == 'PROJECT 1 B']
+        elif active_filter == "ebs":
+            filtered_df = df[df['KONTRAK'] == 'PROJECT EBS']
+        elif active_filter == "adt":
+            filtered_df = df[df['KONTRAK'] == 'PROJECT ADT']
+        else:
+            filtered_df = df.copy()
+    
         c1, c2 = st.columns(2)
-
+    
         with c1:
-            status_counts = df['STATUS'].value_counts().reset_index()
-            status_counts.columns = ['Status', 'Count']
-            fig_status = px.pie(
-                status_counts, names='Status', values='Count', hole=0.4,
-                title="Status Breakdown",
-                color='Status',
-                color_discrete_map=color_map
-            )
-            st.plotly_chart(fig_status, use_container_width=True)
-
+            if not filtered_df.empty:
+                status_counts = filtered_df['STATUS'].value_counts().reset_index()
+                status_counts.columns = ['Status', 'Count']
+                fig_status = px.pie(
+                    status_counts,
+                    names='Status',
+                    values='Count',
+                    hole=0.4,
+                    title=f"Status Breakdown ({active_filter.upper() if active_filter != 'all' else 'ALL PROJECTS'})",
+                    color='Status',
+                    color_discrete_map=color_map
+                )
+                st.plotly_chart(fig_status, use_container_width=True)
+            else:
+                st.info("No data available for selected project.")
+    
         with c2:
-            pending_df = df[df['STATUS'].isin(['TUNDA', 'BELUM MULAI'])]  # Combined logic
+            pending_df = filtered_df[filtered_df['STATUS'].isin(['TUNDA', 'BELUM MULAI'])]
             if not pending_df.empty:
                 pending_count = pending_df['KONTRAK'].value_counts().reset_index()
                 pending_count.columns = ['KONTRAK', 'Pending Count']
@@ -1242,7 +1262,7 @@ def main():
                     y='KONTRAK',
                     orientation='h',
                     text='Pending Count',
-                    title="Projects with Pending Tasks",
+                    title=f"Projects with Pending Tasks ({active_filter.upper() if active_filter != 'all' else 'ALL'})",
                     color='Pending Count',
                     color_continuous_scale='Oranges'
                 )
@@ -1254,7 +1274,8 @@ def main():
                 )
                 st.plotly_chart(fig_pending, use_container_width=True)
             else:
-                st.info("No 'Tunda' or 'Belum Mulai' tasks to display.")
+                st.info("No 'Tunda' or 'Belum Mulai' tasks to display for selected project.")
+
 
 
     # --- Late Tasks Section ---
