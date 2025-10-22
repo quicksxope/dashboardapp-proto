@@ -565,6 +565,24 @@ def main():
     # Add spacing after cards
     st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
 
+    # --- Weighted Progress ---
+    with section_card("🎯 Weighted Progress by Bobot × % Complete (All Projects)"):
+        colA, colB, colC, colD = st.columns(4)
+        for project, col in zip(['PROJECT 1 A', 'PROJECT 1 B', 'PROJECT EBS', 'PROJECT ADT'], [colA, colB, colC, colD]):
+            proj_df = original_df[original_df['KONTRAK'] == project]
+            if not proj_df.empty:
+                weighted = (proj_df['BOBOT'] * proj_df['% COMPLETE']).sum()
+                total_bobot = proj_df['BOBOT'].sum()
+                progress = (weighted / total_bobot) if total_bobot else 0
+                with col:
+                    st.markdown(f"**📌 {project}**")
+                    st.progress(int(progress))
+                    st.caption(f"Progress: **{progress:.2f}%**")
+            else:
+                with col:
+                    st.markdown(f"**📌 {project}**")
+                    st.info("No data available.")
+
    # --- Timeline & Task Table ---
     with section_card("🗓 Project Timeline"):
         # Define color map
