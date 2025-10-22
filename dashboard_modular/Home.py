@@ -162,42 +162,50 @@ overdue_rate = 0.0
 remaining_pct = 0.0
 
 if project_file:
-    dfp = pd.read_excel(pd.ExcelFile(project_file), sheet_name=0)
-    dfp.columns = dfp.columns.str.strip()
-    dfp['KONTRAK'] = dfp['KONTRAK'].astype(str).str.upper().str.strip()
-    dfp['STATUS'] = dfp['STATUS'].astype(str).str.upper().str.strip()
-    dfp['% COMPLETE'] = dfp['% COMPLETE'].apply(lambda x: x * 100 if x <= 1 else x)
-    dfp['START'] = pd.to_datetime(dfp['START'], errors='coerce')
-    dfp['PLAN END'] = pd.to_datetime(dfp['PLAN END'], errors='coerce')
+    excel = pd.ExcelFile(project_file)
+    print(excel.sheet_names)  # buat ngecek nama-nama sheet
 
-    total_projects = dfp['KONTRAK'].nunique()
-    avg_completion = dfp['% COMPLETE'].mean()
-    total_tasks = len(dfp)
-    on_time = ((dfp['PLAN END'] >= pd.Timestamp.today()) & (dfp['STATUS'] == 'SELESAI')).sum()
-    overdue = ((dfp['PLAN END'] < pd.Timestamp.today()) & (dfp['STATUS'] != 'SELESAI')).sum()
-    completed_tasks = dfp[dfp['STATUS'] == 'SELESAI'].shape[0]
-    overdue_rate = (overdue / total_tasks) * 100 if total_tasks else 0
+    # pilih sheet yang isinya gak kosong
+    dfp = pd.read_excel(excel, sheet_name="BASE DATA (wajib update)")
+    dfp.columns = dfp.columns.str.strip().str.upper()
 
-    st.subheader("🏗️ Project Monitoring Summary")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        render_card("Total Projects", total_projects, "Unique KONTRAK", "#fef9c3", "📁")
-    with col2:
-        render_card("Total Tasks", total_tasks, "Rows of activities", "#dcfce7", "📝")
-    with col3:
-        render_card("Overdue Tasks", overdue, "Past due", "#fde68a", "⚠️")
-
-    col4, col5, col6 = st.columns(3)
-    with col4:
-        render_card("On-Time Tasks", on_time, "Completed on-time", "#bae6fd", "⏱️")
-    with col5:
-        render_card("Completed Tasks", completed_tasks, f"of {total_tasks} total", "#d1fae5", "✅")
-    col1, col2 = st.columns(2)
-    with col1:
-        render_progress_card("Avg Completion %", avg_completion, "#60a5fa", "🛠️")
-    with col2:
-        render_progress_card("Overdue Rate", overdue_rate, "#f87171", "⏰")
-        
+    # pastikan kolom 'KONTRAK' memang ada
+    if 'KONTRAK' in dfp.columns:
+        dfp['KONTRAK'] = dfp['KONTRAK'].astype(str).str.upper().str.strip()
+        dfp['KONTRAK'] = dfp['KONTRAK'].astype(str).str.upper().str.strip()
+        dfp['STATUS'] = dfp['STATUS'].astype(str).str.upper().str.strip()
+        dfp['% COMPLETE'] = dfp['% COMPLETE'].apply(lambda x: x * 100 if x <= 1 else x)
+        dfp['START'] = pd.to_datetime(dfp['START'], errors='coerce')
+        dfp['PLAN END'] = pd.to_datetime(dfp['PLAN END'], errors='coerce')
+    
+        total_projects = dfp['KONTRAK'].nunique()
+        avg_completion = dfp['% COMPLETE'].mean()
+        total_tasks = len(dfp)
+        on_time = ((dfp['PLAN END'] >= pd.Timestamp.today()) & (dfp['STATUS'] == 'SELESAI')).sum()
+        overdue = ((dfp['PLAN END'] < pd.Timestamp.today()) & (dfp['STATUS'] != 'SELESAI')).sum()
+        completed_tasks = dfp[dfp['STATUS'] == 'SELESAI'].shape[0]
+        overdue_rate = (overdue / total_tasks) * 100 if total_tasks else 0
+    
+        st.subheader("🏗️ Project Monitoring Summary")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            render_card("Total Projects", total_projects, "Unique KONTRAK", "#fef9c3", "📁")
+        with col2:
+            render_card("Total Tasks", total_tasks, "Rows of activities", "#dcfce7", "📝")
+        with col3:
+            render_card("Overdue Tasks", overdue, "Past due", "#fde68a", "⚠️")
+    
+        col4, col5, col6 = st.columns(3)
+        with col4:
+            render_card("On-Time Tasks", on_time, "Completed on-time", "#bae6fd", "⏱️")
+        with col5:
+            render_card("Completed Tasks", completed_tasks, f"of {total_tasks} total", "#d1fae5", "✅")
+        col1, col2 = st.columns(2)
+        with col1:
+            render_progress_card("Avg Completion %", avg_completion, "#60a5fa", "🛠️")
+        with col2:
+            render_progress_card("Overdue Rate", overdue_rate, "#f87171", "⏰")
+            
 
 if contract_file:
     df = pd.read_excel(contract_file)
