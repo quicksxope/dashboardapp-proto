@@ -162,13 +162,21 @@ overdue_rate = 0.0
 remaining_pct = 0.0
 
 if project_file:
-    dfp = pd.read_excel(pd.ExcelFile(project_file), sheet_name=0)
-    dfp.columns = dfp.columns.str.strip()
-    dfp['KONTRAK'] = dfp['KONTRAK'].astype(str).str.upper().str.strip()
-    dfp['STATUS'] = dfp['STATUS'].astype(str).str.upper().str.strip()
-    dfp['% COMPLETE'] = dfp['% COMPLETE'].apply(lambda x: x * 100 if x <= 1 else x)
-    dfp['START'] = pd.to_datetime(dfp['START'], errors='coerce')
-    dfp['PLAN END'] = pd.to_datetime(dfp['PLAN END'], errors='coerce')
+    xls = pd.ExcelFile(project_file)
+    st.write("📑 Sheet names:", xls.sheet_names)
+    dfp = pd.read_excel(xls, sheet_name=0)
+
+    dfp.columns = dfp.columns.str.upper().str.strip()
+    st.write("📄 Columns detected:", list(dfp.columns))
+
+    if 'KONTRAK' not in dfp.columns:
+        st.error("❌ Kolom 'KONTRAK' tidak ditemukan. Cek lagi nama kolom di file Excel kamu.")
+    else:
+        dfp['KONTRAK'] = dfp['KONTRAK'].astype(str).str.upper().str.strip()
+        dfp['STATUS'] = dfp['STATUS'].astype(str).str.upper().str.strip()
+        dfp['% COMPLETE'] = dfp['% COMPLETE'].apply(lambda x: x * 100 if x <= 1 else x)
+        dfp['START'] = pd.to_datetime(dfp['START'], errors='coerce')
+        dfp['PLAN END'] = pd.to_datetime(dfp['PLAN END'], errors='coerce')
 
     total_projects = dfp['KONTRAK'].nunique()
     avg_completion = dfp['% COMPLETE'].mean()
