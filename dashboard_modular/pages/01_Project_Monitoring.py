@@ -567,8 +567,8 @@ def main():
 
     # --- Weighted Progress ---
     with section_card("🎯 Weighted Progress by Bobot × % Complete (All Projects)"):
-        colA, colB = st.columns(2)
-        for project, col in zip(['PROJECT 1 A', 'PROJECT 1 B'], [colA, colB]):
+        colA, colB, colC, colD = st.columns(4)
+        for project, col in zip(['PROJECT 1 A', 'PROJECT 1 B', 'PROJECT EBS', 'PROJECT ADT'], [colA, colB, colC, colD]):
             proj_df = original_df[original_df['KONTRAK'] == project]
             if not proj_df.empty:
                 weighted = (proj_df['BOBOT'] * proj_df['% COMPLETE']).sum()
