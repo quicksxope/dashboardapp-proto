@@ -1,101 +1,88 @@
-# shared.py (FINAL & STABLE VERSION)
-import hashlib
-import requests
+# shared.py (SIMPLE, CLEAN, FINAL)
+
 import streamlit as st
 import base64
+import hashlib
+import requests
 from io import BytesIO
-from datetime import datetime
 
 GITHUB_HEADERS = {
     "Authorization": f"token {st.secrets['github_token']}",
     "Accept": "application/vnd.github.v3+json"
 }
 
-# =======================================================
-# Cache GitHub file → raw bytes ONLY
-# =======================================================
 @st.cache_data(ttl=3600)
-def fetch_github_file(repo, file_path, branch="main"):
+def fetch_from_github(repo, file_path, branch="main"):
+    """
+    Fetch raw bytes from GitHub and cache it for 1 hour.
+    """
     url = f"https://api.github.com/repos/{repo}/contents/{file_path}?ref={branch}"
-
     res = requests.get(url, headers=GITHUB_HEADERS)
-    if res.status_code != 200:
-        return None, None, None
+    data = res.json()
 
-    info = res.json()
-    raw_bytes = base64.b64decode(info["content"])
-    md5_hash = hashlib.md5(raw_bytes).hexdigest()
-    sha = info["sha"]
+    raw = base64.b64decode(data["content"])
+    hashval = hashlib.md5(raw).hexdigest()
+    sha = data["sha"]
 
-    return raw_bytes, md5_hash, sha
+    return raw, hashval, sha
 
 
-def new_bytesio(raw):
-    """Always return a fresh BytesIO for pandas."""
-    if raw is None:
-        return None
+def fresh_bytesio(raw):
+    """Always return fresh BytesIO for pandas."""
     buf = BytesIO(raw)
     buf.seek(0)
     return buf
 
 
-# =======================================================
-# Upload file to GitHub
-# =======================================================
-def upload_to_github(repo, file_path, raw_bytes, sha, branch="main"):
+def update_github(repo, file_path, raw, sha, branch="main"):
+    """
+    Upload new Excel file to GitHub.
+    """
     url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
 
     payload = {
-        "message": f"Update {file_path}",
-        "content": base64.b64encode(raw_bytes).decode(),
+        "message": "Update via dashboard",
+        "content": base64.b64encode(raw).decode(),
         "sha": sha,
-        "branch": branch,
+        "branch": branch
     }
 
     res = requests.put(url, headers=GITHUB_HEADERS, json=payload)
     return res.status_code in (200, 201)
 
 
-# =======================================================
-# MAIN get_file(): identical behavior for ALL files
-# =======================================================
 def get_file(repo_path, label, key, branch="main"):
-    if "/contents/" not in repo_path:
-        st.error("❌ Path harus format '<repo>/contents/<file>'")
-        return None
 
-    repo, file_path = repo_path.split("/contents/", 1)
+    repo, file_path = repo_path.split("/contents/")
 
-    # Fetch GitHub version (cached)
-    raw_github, github_hash, github_sha = fetch_github_file(repo, file_path, branch)
+    # load from GitHub (cached raw bytes)
+    raw_github, github_hash, github_sha = fetch_from_github(repo, file_path, branch)
 
-    github_file = new_bytesio(raw_github)
-
-    # User upload
-    uploaded = st.sidebar.file_uploader(label, type="xlsx", key=f"{key}_upload")
+    uploaded = st.sidebar.file_uploader(label, type="xlsx", key=key)
 
     if uploaded:
         raw_uploaded = uploaded.getvalue()
         uploaded_hash = hashlib.md5(raw_uploaded).hexdigest()
 
+        # file sama → gunakan GitHub version
         if uploaded_hash == github_hash:
-            st.sidebar.success("✔ File sama dengan database. Menggunakan file default.")
-            return new_bytesio(raw_github)
+            st.sidebar.info("✔ Sama dengan database. Menggunakan file GitHub.")
+            return fresh_bytesio(raw_github)
 
-        with st.sidebar.expander("Konfirmasi Update File"):
-            confirm = st.radio("Update file ke GitHub?", ["Tidak", "Ya"], key=f"{key}_confirm")
+        # file berbeda → konfirmasi update
+        with st.sidebar.expander("Konfirmasi update file"):
+            confirm = st.radio("Update ke GitHub?", ["Tidak", "Ya"], key=f"{key}_c")
 
         if confirm == "Ya":
-            ok = upload_to_github(repo, file_path, raw_uploaded, github_sha, branch)
-            if ok:
+            if update_github(repo, file_path, raw_uploaded, github_sha, branch):
                 st.cache_data.clear()
                 st.sidebar.success("✔ File berhasil diupdate.")
-                return new_bytesio(raw_uploaded)
+                return fresh_bytesio(raw_uploaded)
             else:
-                st.sidebar.error("❌ Upload gagal. Menggunakan file lama.")
-                return github_file
+                st.sidebar.error("❌ Upload gagal.")
+                return fresh_bytesio(raw_github)
 
-        return github_file
+        return fresh_bytesio(raw_github)
 
-    # No upload → return default GitHub version
-    return github_file
+    # default: return GitHub version
+    return fresh_bytesio(raw_github)
