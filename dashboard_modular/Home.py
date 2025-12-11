@@ -10,61 +10,6 @@ import requests
 import numpy as np
 
 
-
-import tempfile, os
-
-def robust_read_excel(file_obj, sheet_name=None):
-    """Safe excel loader fixing Streamlit + BytesIO issues."""
-    if file_obj is None:
-        st.error("❌ File not loaded (None).")
-        st.stop()
-
-    # Read raw bytes
-    try:
-        if hasattr(file_obj, "getvalue"):
-            raw = file_obj.getvalue()
-        else:
-            file_obj.seek(0)
-            raw = file_obj.read()
-    except Exception as e:
-        st.error(f"❌ Cannot read file buffer: {e}")
-        st.stop()
-
-    if raw is None or len(raw) == 0:
-        st.error("❌ File is empty (0 bytes). Reload or re-upload.")
-        st.stop()
-
-    bio = BytesIO(raw)
-    bio.seek(0)
-
-    # Try normal read
-    try:
-        return pd.read_excel(bio, sheet_name=sheet_name)
-    except:
-        pass
-
-    # Try engine=openpyxl
-    try:
-        bio.seek(0)
-        return pd.read_excel(bio, sheet_name=sheet_name, engine="openpyxl")
-    except:
-        pass
-
-    # Fallback: write to temporary file
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-            tmp.write(raw)
-            tmp_path = tmp.name
-
-        df = pd.read_excel(tmp_path, sheet_name=sheet_name)
-        os.remove(tmp_path)
-        return df
-
-    except Exception as e:
-        st.error(f"❌ Final Excel read failed: {e}")
-        st.stop()
-
-
 st.set_page_config(page_title="Dashboard Home", layout="wide")
 require_login()
 
@@ -217,8 +162,11 @@ overdue_rate = 0.0
 remaining_pct = 0.0
 
 if project_file:
+    excel = pd.ExcelFile(project_file)
+    print(excel.sheet_names)  # Debug: cek nama-nama sheet
+
     # --- Baca sheet utama ---
-    dfp = robust_read_excel(project_file, sheet_name="BASE DATA (wajib update)")
+    dfp = pd.read_excel(excel, sheet_name="BASE DATA (wajib update)")
     dfp.columns = dfp.columns.str.strip().str.upper()
 
     # --- Validasi kolom penting ---
@@ -287,7 +235,7 @@ if project_file:
             
 
 if contract_file:
-    df = robust_read_excel(contract_file)
+    df = pd.read_excel(contract_file)
     df.columns = df.columns.str.strip()
 
     # --- Rename kolom ---
@@ -369,7 +317,7 @@ if contract_file:
 
 
 if payment_term_file:
-    df_terms = robust_read_excel(payment_term_file, sheet_name="Sheet1")
+    df_terms = pd.read_excel(payment_term_file, sheet_name="Sheet1")
     df_terms.columns = df_terms.columns.str.strip().str.upper()
     df_terms['STATUS'] = df_terms['STATUS'].str.upper()
     df_terms['VENDOR'] = df_terms['VENDOR'].str.strip()
