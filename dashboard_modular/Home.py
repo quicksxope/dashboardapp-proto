@@ -221,7 +221,7 @@ if project_file:
     print(excel.sheet_names)  # Debug: cek nama-nama sheet
 
     # --- Baca sheet utama ---
-    dfp = pd.robust_read_excel(excel, sheet_name="BASE DATA (wajib update)")
+    dfp = robust_read_excel(excel, sheet_name="BASE DATA (wajib update)")
     dfp.columns = dfp.columns.str.strip().str.upper()
 
     # --- Validasi kolom penting ---
@@ -290,7 +290,7 @@ if project_file:
             
 
 if contract_file:
-    df = pd.robust_read_excel(contract_file)
+    df = robust_read_excel(contract_file)
     df.columns = df.columns.str.strip()
 
     # --- Rename kolom ---
@@ -372,7 +372,7 @@ if contract_file:
 
 
 if payment_term_file:
-    df_terms = pd.roubust_read_excel(payment_term_file, sheet_name="Sheet1")
+    df_terms = roubust_read_excel(payment_term_file, sheet_name="Sheet1")
     df_terms.columns = df_terms.columns.str.strip().str.upper()
     df_terms['STATUS'] = df_terms['STATUS'].str.upper()
     df_terms['VENDOR'] = df_terms['VENDOR'].str.strip()
