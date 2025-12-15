@@ -1303,6 +1303,7 @@ def main():
                 color='Pending Count',
                 color_continuous_scale='Oranges'
             )
+
     
             fig_pending.update_traces(
                 texttemplate='%{text}', 
