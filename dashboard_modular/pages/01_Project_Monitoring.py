@@ -21,6 +21,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared import get_file
 
 
+# --- Project Mapping ---
+PROJECT_MAP = {
+    "PROJECT 1 A": "KSO SPLIT LDS",
+    "PROJECT 1 B": "KSO SPLIT MAA",
+}
+
+REVERSE_PROJECT_MAP = {v: k for k, v in PROJECT_MAP.items()}
 
 
 def clean_text(x):
