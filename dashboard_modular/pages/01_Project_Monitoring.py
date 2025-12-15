@@ -595,8 +595,9 @@ def main():
             [colA, colB]
         ):
             proj_df = original_df[
-                original_df['KONTRAK'] == PROJECT_MAP[project]
+                original_df['KONTRAK_DASHBOARD'] == project
             ]
+
         
             if not proj_df.empty:
                 weighted = (proj_df['BOBOT'] * proj_df['% COMPLETE']).sum()
