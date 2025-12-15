@@ -729,13 +729,13 @@ def main():
                 timeline_df['KONTRAK_DASHBOARD'] == 'PROJECT 1 A'
             ]
 
-            st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>PROJECT 1 A</strong></div>", unsafe_allow_html=True)
+            st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>KSO SPLIT LDS<</strong></div>", unsafe_allow_html=True)
         elif st.session_state.active_project_filter == 'p1b':
             timeline_df = timeline_df[
                 timeline_df['KONTRAK_DASHBOARD'] == 'PROJECT 1 B'
             ]
 
-            st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>PROJECT 1 B</strong></div>", unsafe_allow_html=True)
+            st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>KSO SPLIT MAA<</strong></div>", unsafe_allow_html=True)
         else:
             st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>all projects</strong></div>", unsafe_allow_html=True)
             
