@@ -792,7 +792,7 @@ def main():
             )
 
             # Sort by level and task order for hierarchical display
-            timeline_df = timeline_df.sort_values(['KONTRAK', 'TASK_LEVEL', 'START'])
+            timeline_df = timeline_df.sort_values(['KONTRAK_DASHBOARD', 'TASK_LEVEL', 'START'])
         else:
             # Simple task format without hierarchy
             timeline_df['Task'] = timeline_df.apply(
