@@ -19,7 +19,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from shared import get_file
-df['KONTRAK_RAW'] = df['KONTRAK'].astype(str)
+
 
 
 # --- Project Mapping ---
@@ -114,12 +114,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+
 @st.cache_data
 def load_data(file):
-    # Load the main data sheet
     df = pd.read_excel(file, sheet_name="BASE DATA (wajib update)")
     df.columns = df.columns.str.strip()
     df['START'] = pd.to_datetime(df['START'], errors='coerce')
+
+    # 🔥 SIMPAN KONTRAK ASLI (WAJIB, SEKALI SAJA)
+    df['KONTRAK_RAW'] = df['KONTRAK'].astype(str)
+
     
     # Clean text columns
     for col in ['KONTRAK', 'JENIS PEKERJAAN', 'STATUS']:
