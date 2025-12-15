@@ -818,7 +818,10 @@ def main():
             for _, row in timeline_df.iterrows():
                 task_dict[row['TASK_ID']] = row
 
-            st.write(timeline_df[['KONTRAK', 'KONTRAK_DASHBOARD', 'Task']].head())
+            st.write(
+                timeline_df[['KONTRAK_RAW', 'KONTRAK_DASHBOARD', 'Task']].head()
+            )
+
 
             # Create Gantt chart with custom hover info
             fig = px.timeline(
