@@ -726,13 +726,13 @@ def main():
         # Filter based on session state active filter
         if st.session_state.active_project_filter == 'p1a':
             timeline_df = timeline_df[
-                timeline_df['KONTRAK'] == PROJECT_MAP['PROJECT 1 A']
+                timeline_df['KONTRAK_DASHBOARD'] == 'PROJECT 1 A'
             ]
 
             st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>PROJECT 1 A</strong></div>", unsafe_allow_html=True)
         elif st.session_state.active_project_filter == 'p1b':
             timeline_df = timeline_df[
-                timeline_df['KONTRAK'] == PROJECT_MAP['PROJECT 1 B']
+                timeline_df['KONTRAK_DASHBOARD'] == 'PROJECT 1 B'
             ]
 
             st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>PROJECT 1 B</strong></div>", unsafe_allow_html=True)
@@ -1249,9 +1249,9 @@ def main():
         active_filter = st.session_state.get("active_project_filter", "all")
     
         if active_filter == "p1a":
-            filtered_df = df[df['KONTRAK'] == PROJECT_MAP['PROJECT 1 A']]
+            filtered_df = df[df['KONTRAK_DASHBOARD'] == PROJECT_MAP['PROJECT 1 A']]
         elif active_filter == "p1b":
-            filtered_df = df[df['KONTRAK'] == PROJECT_MAP['PROJECT 1 B']]
+            filtered_df = df[df['KONTRAK_DASHBOARD'] == PROJECT_MAP['PROJECT 1 B']]
         else:
             filtered_df = df.copy()
     
