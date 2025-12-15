@@ -772,20 +772,17 @@ def main():
         if 'TASK_LEVEL' in timeline_df.columns:
             # Create indented task names for hierarchy visualization
             timeline_df['Task'] = timeline_df.apply(
-                lambda row: ("  " * (max(0, row['TASK_LEVEL'] - 1)))
-                + f"{row['KONTRAK_DASHBOARD']} - {row['JENIS PEKERJAAN']}",
+                lambda row: ("  " * (max(0, row['TASK_LEVEL'] - 1))) + f"{row['KONTRAK']} - {row['JENIS PEKERJAAN']}", 
                 axis=1
             )
-
             # Sort by level and task order for hierarchical display
             timeline_df = timeline_df.sort_values(['KONTRAK', 'TASK_LEVEL', 'START'])
         else:
             # Simple task format without hierarchy
             timeline_df['Task'] = timeline_df.apply(
-                lambda row: f"{row['KONTRAK_DASHBOARD']} - {row['JENIS PEKERJAAN']}",
+                lambda row: f"{row['KONTRAK']} - {row['JENIS PEKERJAAN']}", 
                 axis=1
             )
-
         
         # ===== GANTT CHART TAB =====
         with timeline_tabs[0]:
