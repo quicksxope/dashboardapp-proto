@@ -124,6 +124,13 @@ def load_data(file):
     for col in ['KONTRAK', 'JENIS PEKERJAAN', 'STATUS']:
         if col in df.columns:
             df[col] = df[col].apply(clean_text)
+    df['KONTRAK_DASHBOARD'] = (
+        df['KONTRAK']
+        .map(REVERSE_PROJECT_MAP)
+            .fillna(df['KONTRAK'])
+    )
+         # === Dashboard Project Name (AFTER CLEANING) ===
+          
     
     # Format percentage completion
     if '% COMPLETE' in df.columns:
