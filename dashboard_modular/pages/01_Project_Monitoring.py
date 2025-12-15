@@ -670,7 +670,7 @@ def main():
         with row1_col2:
             p1a_active = st.session_state.active_project_filter == 'p1a'
             if st.button(
-                f"{'✓ ' if p1a_active else ''}PROJECT 1 A",
+                f"{'✓ ' if p1a_active else ''}{PROJECT_MAP['PROJECT 1 A']}",
                 key="p1a_timeline",
                 on_click=set_p1a_filter,
                 type="primary" if p1a_active else "secondary",
@@ -681,7 +681,7 @@ def main():
         with row1_col3:
             p1b_active = st.session_state.active_project_filter == 'p1b'
             if st.button(
-                f"{'✓ ' if p1b_active else ''}PROJECT 1 B",
+                f"{'✓ ' if p1b_active else ''}{PROJECT_MAP['PROJECT 1 B']}",
                 key="p1b_timeline",
                 on_click=set_p1b_filter,
                 type="primary" if p1b_active else "secondary",
