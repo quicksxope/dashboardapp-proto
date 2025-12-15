@@ -130,9 +130,6 @@ def load_data(file):
         .map(REVERSE_PROJECT_MAP)
         .fillna(df['KONTRAK'])
     )
-
-         # === Dashboard Project Name (AFTER CLEANING) ===
-          
     
     # Format percentage completion
     if '% COMPLETE' in df.columns:
