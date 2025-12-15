@@ -19,6 +19,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from shared import get_file
+df['KONTRAK_RAW'] = df['KONTRAK'].astype(str)
 
 
 # --- Project Mapping ---
@@ -126,10 +127,11 @@ def load_data(file):
             df[col] = df[col].apply(clean_text)
     # === Dashboard Project Name (AFTER CLEANING) ===
     df['KONTRAK_DASHBOARD'] = (
-        df['KONTRAK']
+        df['KONTRAK_RAW']
         .map(REVERSE_PROJECT_MAP)
-        .fillna(df['KONTRAK'])
+        .fillna(df['KONTRAK_RAW'])
     )
+
     
     # Format percentage completion
     if '% COMPLETE' in df.columns:
@@ -787,7 +789,7 @@ def main():
             # Create indented task names for hierarchy visualization
             timeline_df['Task'] = timeline_df.apply(
                 lambda row: ("  " * (max(0, row['TASK_LEVEL'] - 1)))
-                + f"{row['KONTRAK']} - {row['JENIS PEKERJAAN']}",
+                + f"{row['KONTRAK_RAW']} - {row['JENIS PEKERJAAN']}",
                 axis=1
             )
 
@@ -796,7 +798,7 @@ def main():
         else:
             # Simple task format without hierarchy
             timeline_df['Task'] = timeline_df.apply(
-                lambda row: f"{row['KONTRAK']} - {row['JENIS PEKERJAAN']}",
+                lambda row: f"{row['KONTRAK_RAW']} - {row['JENIS PEKERJAAN']}",
                 axis=1
             )
 
