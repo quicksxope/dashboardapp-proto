@@ -822,9 +822,12 @@ def main():
                 hover_name='Tooltip',
                 custom_data=['% COMPLETE', 'TASK_ID'] if '% COMPLETE' in timeline_df.columns else None
             )
+            fig.update_yaxes(
+                autorange="reversed",
+                categoryorder="array",
+                categoryarray=timeline_df['Task'].tolist()
+            )
             
-            # Reverse the y-axis so tasks appear in chronological order
-            fig.update_yaxes(autorange="reversed")
             
             # Customize task bar appearance (diamond shapes for milestones)
             for i, row in timeline_df.iterrows():
