@@ -705,6 +705,7 @@ def main():
     if {'START', 'PLAN END'}.issubset(original_df.columns):
         # Create timeline dataframe from original data with additional columns for enhanced features
         timeline_columns = [
+                'KONTRAK_RAW',   
                 'KONTRAK',
                 'KONTRAK_DASHBOARD',   # ⬅️ INI KUNCI NYA
                 'JENIS PEKERJAAN',
