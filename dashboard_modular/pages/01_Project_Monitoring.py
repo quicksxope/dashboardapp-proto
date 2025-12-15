@@ -699,10 +699,24 @@ def main():
     if {'START', 'PLAN END'}.issubset(original_df.columns):
         # Create timeline dataframe from original data with additional columns for enhanced features
         timeline_columns = [
-            'KONTRAK', 'JENIS PEKERJAAN', 'START', 'PLAN END', 'STATUS', '% COMPLETE', 
-            'TASK_ID', 'TASK_LEVEL', 'IS_MILESTONE', 'PREDECESSORS', 'RESOURCE', 'PLAN_PROGRESS', 'BOBOT',
-            'AREA PEKERJAAN', 'SUB AREA PEKERJAAN'  # ⬅️ tambahin ini bro!
-        ]
+                'KONTRAK',
+                'KONTRAK_DASHBOARD',   # ⬅️ INI KUNCI NYA
+                'JENIS PEKERJAAN',
+                'START',
+                'PLAN END',
+                'STATUS',
+                '% COMPLETE',
+                'TASK_ID',
+                'TASK_LEVEL',
+                'IS_MILESTONE',
+                'PREDECESSORS',
+                'RESOURCE',
+                'PLAN_PROGRESS',
+                'BOBOT',
+                'AREA PEKERJAAN',
+                'SUB AREA PEKERJAAN'
+            ]
+
 
         
         # Only include columns that exist in the data
