@@ -127,7 +127,7 @@ def load_data(file):
     df['KONTRAK_DASHBOARD'] = (
         df['KONTRAK']
         .map(REVERSE_PROJECT_MAP)
-            .fillna(df['KONTRAK'])
+        .fillna(df['KONTRAK'])
     )
          # === Dashboard Project Name (AFTER CLEANING) ===
           
