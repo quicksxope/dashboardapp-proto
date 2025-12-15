@@ -603,13 +603,13 @@ def main():
                 total_bobot = proj_df['BOBOT'].sum()
                 progress = (weighted / total_bobot) if total_bobot else 0
                 with col:
-                    st.markdown(f"**📌 {project}**")
+                    st.markdown(f"**📌 {PROJECT_MAP.get(project, project)}**")
 
                     st.progress(int(progress))
                     st.caption(f"Progress: **{progress:.2f}%**")
             else:
                 with col:
-                    st.markdown(f"**📌 {project}**")
+                    st.markdown(f"**📌 {PROJECT_MAP.get(project, project)}**")
 
                     st.info("No data available.")
 
