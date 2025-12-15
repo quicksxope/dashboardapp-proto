@@ -1275,7 +1275,7 @@ def main():
             fig_pending = px.bar(
                 pending_count,
                 x='Pending Count',
-                y='KONTRAK',
+                y='Project',
                 orientation='h',
                 text='Pending Count',
                 title=f"Projects with Pending Tasks ({active_filter.upper() if active_filter != 'all' else 'ALL'})",
