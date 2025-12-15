@@ -1196,7 +1196,7 @@ def main():
                 
                 # Create an expander for each task with details
                 for _, row in timeline_df.iterrows():
-                    with st.expander(f"{row['KONTRAK']} - {row['JENIS PEKERJAAN']}"):
+                    with st.expander(f"{row['KONTRAK_DASHBOARD']} - {row['JENIS PEKERJAAN']}"):
                         col1, col2 = st.columns(2)
                         
                         with col1:
@@ -1466,7 +1466,7 @@ def main():
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
                 original_df = original_df[
-                    original_df['KONTRAK'] == PROJECT_MAP[selected_project]
+                    original_df['KONTRAK_DASHBOARD'] == selected_project
                 ]
 
 
