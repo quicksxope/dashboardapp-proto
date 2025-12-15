@@ -787,7 +787,7 @@ def main():
             # Create indented task names for hierarchy visualization
             timeline_df['Task'] = timeline_df.apply(
                 lambda row: ("  " * (max(0, row['TASK_LEVEL'] - 1)))
-                + f"{row['KONTRAK_DASHBOARD']} - {row['JENIS PEKERJAAN']}",
+                + f"{row['KONTRAK']} - {row['JENIS PEKERJAAN']}",
                 axis=1
             )
 
@@ -796,7 +796,7 @@ def main():
         else:
             # Simple task format without hierarchy
             timeline_df['Task'] = timeline_df.apply(
-                lambda row: f"{row['KONTRAK_DASHBOARD']} - {row['JENIS PEKERJAAN']}",
+                lambda row: f"{row['KONTRAK']} - {row['JENIS PEKERJAAN']}",
                 axis=1
             )
 
