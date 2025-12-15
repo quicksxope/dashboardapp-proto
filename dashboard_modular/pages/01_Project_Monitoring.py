@@ -1287,12 +1287,10 @@ def main():
             pending_count = (
                 pending_df['KONTRAK_DASHBOARD']
                 .value_counts()
-                .map(REVERSE_PROJECT_MAP)
-                .value_counts()
-                .reindex(all_projects, fill_value=0)
-                .reset_index()
+                .reset_index(name='Pending Count')
+                .rename(columns={'index': 'Project'})
             )
-            pending_count.columns = ['Project', 'Pending Count']
+
 
     
             fig_pending = px.bar(
