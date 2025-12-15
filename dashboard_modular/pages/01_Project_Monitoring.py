@@ -171,13 +171,21 @@ def load_data(file):
         df['PREDECESSORS'] = ""
         
         # Create simple sequential dependencies within same project
-        if 'KONTRAK' in df.columns:
-            for project in df['KONTRAK'].unique():
-                project_tasks = df[df['KONTRAK'] == project].sort_values('START').copy()
-                for i in range(1, len(project_tasks)):
-                    curr_id = project_tasks.iloc[i]['TASK_ID']
-                    prev_id = project_tasks.iloc[i-1]['TASK_ID']
-                    df.loc[df['TASK_ID'] == curr_id, 'PREDECESSORS'] = prev_id
+    # --- Generate dependencies per REAL project (KSO) ---
+    if 'KONTRAK' in df.columns:
+        for kontrak_real in df['KONTRAK'].dropna().unique():
+            project_tasks = (
+                df[df['KONTRAK'] == kontrak_real]
+                .dropna(subset=['START'])
+                .sort_values('START')
+                .copy()
+            )
+    
+            for i in range(1, len(project_tasks)):
+                curr_id = project_tasks.iloc[i]['TASK_ID']
+                prev_id = project_tasks.iloc[i - 1]['TASK_ID']
+                df.loc[df['TASK_ID'] == curr_id, 'PREDECESSORS'] = prev_id
+
     
     # Resource data is not available yet, so we won't generate mock data
     
@@ -533,7 +541,7 @@ def main():
     df = original_df.copy()
 
     # Example continuation: safe to access original_df now
-    kontrak_opts = ['All'] + sorted(original_df['KONTRAK'].dropna().unique())
+    kontrak_opts = ['All'] + sorted(original_df['KONTRAK_DASHBOARD'].dropna().unique())
     selected_kontrak = st.sidebar.selectbox("Filter by KONTRAK", kontrak_opts)
 
     filter_columns = ['JENIS PEKERJAAN', 'AREA PEKERJAAN', 'SUB AREA PEKERJAAN']
@@ -542,7 +550,8 @@ def main():
     selected_filter_val = st.sidebar.selectbox("Select Value", filter_values)
 
     if selected_kontrak != 'All':
-        df = df[df['KONTRAK'] == selected_kontrak]
+        df = df[df['KONTRAK_DASHBOARD'] == selected_kontrak]
+
     if selected_filter_val != 'All':
         df = df[df[selected_filter_col] == selected_filter_val]
 
@@ -582,8 +591,14 @@ def main():
     # --- Weighted Progress ---
     with section_card("🎯 Weighted Progress by Bobot × % Complete (All Projects)"):
         colA, colB, colC, colD = st.columns(4)
-        for project, col in zip(['PROJECT 1 A', 'PROJECT 1 B', 'PROJECT EBS', 'PROJECT ADT'], [colA, colB, colC, colD]):
-            proj_df = original_df[original_df['KONTRAK'] == project]
+        for project, col in zip(
+                ['PROJECT 1 A', 'PROJECT 1 B'],
+                [colA, colB]
+            ):
+                proj_df = original_df[
+                    original_df['KONTRAK'] == PROJECT_MAP[project]
+                ]
+
             if not proj_df.empty:
                 weighted = (proj_df['BOBOT'] * proj_df['% COMPLETE']).sum()
                 total_bobot = proj_df['BOBOT'].sum()
@@ -632,14 +647,7 @@ def main():
             st.session_state.active_project_filter = 'p1b'
             st.session_state.button_clicked_this_run = True
     
-        def set_ebs_filter():
-            st.session_state.active_project_filter = 'ebs'
-            st.session_state.button_clicked_this_run = True
-    
-        def set_adt_filter():
-            st.session_state.active_project_filter = 'adt'
-            st.session_state.button_clicked_this_run = True
-    
+        
         # --- Layout Buttons (2 rows × 3 columns for balance) ---
         row1_col1, row1_col2, row1_col3 = st.columns(3)
         row2_col1, row2_col2, _ = st.columns([1, 1, 1])
@@ -678,28 +686,7 @@ def main():
             ):
                 st.rerun()
     
-        # --- Row 2 ---
-        with row2_col1:
-            ebs_active = st.session_state.active_project_filter == 'ebs'
-            if st.button(
-                f"{'✓ ' if ebs_active else ''}PROJECT EBS",
-                key="ebs_timeline",
-                on_click=set_ebs_filter,
-                type="primary" if ebs_active else "secondary",
-                use_container_width=True
-            ):
-                st.rerun()
-    
-        with row2_col2:
-            adt_active = st.session_state.active_project_filter == 'adt'
-            if st.button(
-                f"{'✓ ' if adt_active else ''}PROJECT ADT",
-                key="adt_timeline",
-                on_click=set_adt_filter,
-                type="primary" if adt_active else "secondary",
-                use_container_width=True
-            ):
-                st.rerun()
+       
 
         
         # Initialize view tabs for timeline features
@@ -721,10 +708,16 @@ def main():
         
         # Filter based on session state active filter
         if st.session_state.active_project_filter == 'p1a':
-            timeline_df = timeline_df[timeline_df['KONTRAK'] == 'PROJECT 1 A']
+            timeline_df = timeline_df[
+                timeline_df['KONTRAK'] == PROJECT_MAP['PROJECT 1 A']
+            ]
+
             st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>PROJECT 1 A</strong></div>", unsafe_allow_html=True)
         elif st.session_state.active_project_filter == 'p1b':
-            timeline_df = timeline_df[timeline_df['KONTRAK'] == 'PROJECT 1 B']
+            timeline_df = timeline_df[
+                timeline_df['KONTRAK'] == PROJECT_MAP['PROJECT 1 B']
+            ]
+
             st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>PROJECT 1 B</strong></div>", unsafe_allow_html=True)
         else:
             st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>all projects</strong></div>", unsafe_allow_html=True)
@@ -1239,10 +1232,6 @@ def main():
             filtered_df = df[df['KONTRAK'] == 'PROJECT 1 A']
         elif active_filter == "p1b":
             filtered_df = df[df['KONTRAK'] == 'PROJECT 1 B']
-        elif active_filter == "ebs":
-            filtered_df = df[df['KONTRAK'] == 'PROJECT EBS']
-        elif active_filter == "adt":
-            filtered_df = df[df['KONTRAK'] == 'PROJECT ADT']
         else:
             filtered_df = df.copy()
     
@@ -1435,7 +1424,8 @@ def main():
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
             
-            project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B', 'PROJECT ADT', 'PROJECT EBS']
+            project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
+
             
             # --- Render Buttons ---
             cols = st.columns(len(project_options))
@@ -1447,7 +1437,10 @@ def main():
             # --- Filter Data ---
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
-                original_df = original_df[original_df['KONTRAK'] == selected_project]
+                original_df = original_df[
+                    original_df['KONTRAK'] == PROJECT_MAP[selected_project]
+                ]
+
 
                         
 
