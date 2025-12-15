@@ -602,15 +602,13 @@ def main():
                 total_bobot = proj_df['BOBOT'].sum()
                 progress = (weighted / total_bobot) if total_bobot else 0
                 with col:
-                    st.markdown(f"**📌 {PROJECT_MAP.get(project_key, project_key)}**")
-
+                    st.markdown(f"**📌 {PROJECT_MAP.get(project, project)}**")
 
                     st.progress(int(progress))
                     st.caption(f"Progress: **{progress:.2f}%**")
             else:
                 with col:
-                    st.markdown(f"**📌 {PROJECT_MAP.get(project_key, project_key)}**")
-
+                    st.markdown(f"**📌 {PROJECT_MAP.get(project, project)}**")
 
                     st.info("No data available.")
 
@@ -1287,12 +1285,13 @@ def main():
             pending_count = (
                 pending_df['KONTRAK_DASHBOARD']
                 .value_counts()
-                .reset_index(name='Pending Count')
-                .rename(columns={'index': 'Project'})
+                .map(REVERSE_PROJECT_MAP)
+                .value_counts()
+                .reindex(all_projects, fill_value=0)
+                .reset_index()
             )
+            pending_count.columns = ['Project', 'Pending Count']
 
-            x_col = 'Pending Count'
-            y_col = 'Project'
     
             fig_pending = px.bar(
                 pending_count,
@@ -1304,7 +1303,6 @@ def main():
                 color='Pending Count',
                 color_continuous_scale='Oranges'
             )
-
     
             fig_pending.update_traces(
                 texttemplate='%{text}', 
@@ -1455,7 +1453,7 @@ def main():
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
             
-            project_options = ['All Projects', 'KSO SPLIT LDS', 'KSO SPLIT MAA']
+            project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
 
             
             # --- Render Buttons ---
