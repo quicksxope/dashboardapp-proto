@@ -124,11 +124,13 @@ def load_data(file):
     for col in ['KONTRAK', 'JENIS PEKERJAAN', 'STATUS']:
         if col in df.columns:
             df[col] = df[col].apply(clean_text)
+    # === Dashboard Project Name (AFTER CLEANING) ===
     df['KONTRAK_DASHBOARD'] = (
         df['KONTRAK']
         .map(REVERSE_PROJECT_MAP)
         .fillna(df['KONTRAK'])
     )
+
          # === Dashboard Project Name (AFTER CLEANING) ===
           
     
@@ -592,13 +594,13 @@ def main():
     with section_card("🎯 Weighted Progress by Bobot × % Complete (All Projects)"):
         colA, colB, colC, colD = st.columns(4)
         for project, col in zip(
-                ['PROJECT 1 A', 'PROJECT 1 B'],
-                [colA, colB]
-            ):
-                proj_df = original_df[
-                    original_df['KONTRAK'] == PROJECT_MAP[project]
-                ]
-
+            ['PROJECT 1 A', 'PROJECT 1 B'],
+            [colA, colB]
+        ):
+            proj_df = original_df[
+                original_df['KONTRAK'] == PROJECT_MAP[project]
+            ]
+        
             if not proj_df.empty:
                 weighted = (proj_df['BOBOT'] * proj_df['% COMPLETE']).sum()
                 total_bobot = proj_df['BOBOT'].sum()
@@ -611,6 +613,7 @@ def main():
                 with col:
                     st.markdown(f"**📌 {project}**")
                     st.info("No data available.")
+
 
    # --- Timeline & Task Table ---
     with section_card("🗓 Project Timeline"):
@@ -1229,9 +1232,9 @@ def main():
         active_filter = st.session_state.get("active_project_filter", "all")
     
         if active_filter == "p1a":
-            filtered_df = df[df['KONTRAK'] == 'PROJECT 1 A']
+            filtered_df = df[df['KONTRAK'] == PROJECT_MAP['PROJECT 1 A']]
         elif active_filter == "p1b":
-            filtered_df = df[df['KONTRAK'] == 'PROJECT 1 B']
+            filtered_df = df[df['KONTRAK'] == PROJECT_MAP['PROJECT 1 B']]
         else:
             filtered_df = df.copy()
     
@@ -1258,11 +1261,19 @@ def main():
             pending_df = filtered_df[filtered_df['STATUS'].isin(['TUNDA', 'BELUM MULAI'])]
     
             # Semua project yang harus ditampilkan
-            all_projects = ['PROJECT 1 A', 'PROJECT 1 B', 'PROJECT EBS', 'PROJECT ADT']
+            all_projects = ['PROJECT 1 A', 'PROJECT 1 B']
+
     
             # Hitung pending per project
-            pending_count = pending_df['KONTRAK'].value_counts().reindex(all_projects, fill_value=0).reset_index()
-            pending_count.columns = ['KONTRAK', 'Pending Count']
+            pending_count = (
+                pending_df['KONTRAK']
+                .map(REVERSE_PROJECT_MAP)
+                .value_counts()
+                .reindex(all_projects, fill_value=0)
+                .reset_index()
+            )
+            pending_count.columns = ['Project', 'Pending Count']
+
     
             fig_pending = px.bar(
                 pending_count,
