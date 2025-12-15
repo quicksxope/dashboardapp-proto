@@ -267,7 +267,7 @@ def calculate_priority_score(row):
 @st.cache_data
 def create_enhanced_tooltip(row):
     """Create an enhanced tooltip with all available task information"""
-    tooltip = f"...<br>Project: {row['KONTRAK_DASHBOARD']}</b><br>Project: {row['KONTRAK']}<br>Status: {row['STATUS']}"
+    tooltip = f"<b>{row['JENIS PEKERJAAN']}</b><br>Project: {row['KONTRAK']}<br>Status: {row['STATUS']}"
     
     # Add area and sub-area if available
     if 'AREA PEKERJAAN' in row and not pd.isna(row['AREA PEKERJAAN']):
@@ -590,11 +590,13 @@ def main():
     # --- Weighted Progress ---
     with section_card("🎯 Weighted Progress by Bobot × % Complete (All Projects)"):
         colA, colB, colC, colD = st.columns(4)
-        for project_key, col in zip(['PROJECT 1 A', 'PROJECT 1 B'], [colA, colB]):
+        for project, col in zip(
+            ['PROJECT 1 A', 'PROJECT 1 B'],
+            [colA, colB]
+        ):
             proj_df = original_df[
-                original_df['KONTRAK'] == project_key
+                original_df['KONTRAK_DASHBOARD'] == project
             ]
-
 
         
             if not proj_df.empty:
@@ -724,18 +726,16 @@ def main():
         # Filter based on session state active filter
         if st.session_state.active_project_filter == 'p1a':
             timeline_df = timeline_df[
-                timeline_df['KONTRAK'] == 'PROJECT 1 A'
+                timeline_df['KONTRAK'] == PROJECT_MAP['PROJECT 1 A']
             ]
 
-
-            st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>KSO SPLIT LDS</strong></div>", unsafe_allow_html=True)
+            st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>PROJECT 1 A</strong></div>", unsafe_allow_html=True)
         elif st.session_state.active_project_filter == 'p1b':
             timeline_df = timeline_df[
-                timeline_df['KONTRAK'] == 'PROJECT 1 B'
+                timeline_df['KONTRAK'] == PROJECT_MAP['PROJECT 1 B']
             ]
 
-
-            st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>KSO SPLIT MAA</strong></div>", unsafe_allow_html=True)
+            st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>PROJECT 1 B</strong></div>", unsafe_allow_html=True)
         else:
             st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>all projects</strong></div>", unsafe_allow_html=True)
             
@@ -1196,11 +1196,11 @@ def main():
                 
                 # Create an expander for each task with details
                 for _, row in timeline_df.iterrows():
-                    with st.expander(f"{row['KONTRAK_DASHBOARD']} - {row['JENIS PEKERJAAN']}"):
+                    with st.expander(f"{row['KONTRAK']} - {row['JENIS PEKERJAAN']}"):
                         col1, col2 = st.columns(2)
                         
                         with col1:
-                            st.markdown(f"**Project:** {row['KONTRAK_DASHBOARD']}")
+                            st.markdown(f"**Project:** {row['KONTRAK']}")
                             st.markdown(f"**Task:** {row['JENIS PEKERJAAN']}")
                             if 'AREA PEKERJAAN' in row and not pd.isna(row['AREA PEKERJAAN']):
                                 st.markdown(f"**Area Pekerjaan:** {row['AREA PEKERJAAN']}")
@@ -1283,8 +1283,7 @@ def main():
     
             # Hitung pending per project
             pending_count = (
-                pending_df['KONTRAK_DASHBOARD']
-                .value_counts()
+                pending_df['KONTRAK']
                 .map(REVERSE_PROJECT_MAP)
                 .value_counts()
                 .reindex(all_projects, fill_value=0)
@@ -1339,9 +1338,9 @@ def main():
                 st.markdown(card("Total Late Days", f"{total_late_days}", "Total days overdue", "⚠️", "#ffe0e0"), unsafe_allow_html=True)
 
             with colL2:
-                late_df_display = late_df[['KONTRAK_DASHBOARD', 'JENIS PEKERJAAN', '% COMPLETE', 'SUB AREA PEKERJAAN', 'STATUS', 'LATE DAYS']]
+                late_df_display = late_df[['KONTRAK', 'JENIS PEKERJAAN', '% COMPLETE', 'SUB AREA PEKERJAAN', 'STATUS', 'LATE DAYS']]
                 late_df_display = late_df_display.rename(columns={
-                    'KONTRAK_DASHBOARD': 'Project',
+                    'KONTRAK': 'Project',
                     'JENIS PEKERJAAN': 'Task',
                     '% COMPLETE': 'Progress',
                     'SUB AREA PEKERJAAN': 'Sub Area',
@@ -1374,7 +1373,7 @@ def main():
                     return 'background-color: rgba(0, 128, 0, 0.3); color: white; font-weight: bold'  # Low priority (green)
             
             # Prepare recommendation dataframe with Area Pekerjaan
-            columns_to_include = ['KONTRAK_DASHBOARD', 'JENIS PEKERJAAN', 'AREA PEKERJAAN', 'STATUS', 'PLAN END', 'BOBOT', 'PRIORITY_SCORE']
+            columns_to_include = ['KONTRAK', 'JENIS PEKERJAAN', 'AREA PEKERJAAN', 'STATUS', 'PLAN END', 'BOBOT', 'PRIORITY_SCORE']
             # Filter to only include columns that actually exist in the dataframe
             existing_columns = [col for col in columns_to_include if col in active_tasks.columns]
             rec_df = active_tasks[existing_columns].head(5)
@@ -1467,7 +1466,7 @@ def main():
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
                 original_df = original_df[
-                    original_df['KONTRAK'] == selected_project
+                    original_df['KONTRAK'] == PROJECT_MAP[selected_project]
                 ]
 
 
