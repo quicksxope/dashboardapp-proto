@@ -1283,13 +1283,13 @@ def main():
     
             # Hitung pending per project
             pending_count = (
-                pending_df['KONTRAK']
-                .map(REVERSE_PROJECT_MAP)
+                pending_df['KONTRAK_DASHBOARD']
                 .value_counts()
-                .reindex(all_projects, fill_value=0)
+                .reindex(['PROJECT 1 A', 'PROJECT 1 B'], fill_value=0)
                 .reset_index()
             )
             pending_count.columns = ['Project', 'Pending Count']
+            
 
     
             fig_pending = px.bar(
