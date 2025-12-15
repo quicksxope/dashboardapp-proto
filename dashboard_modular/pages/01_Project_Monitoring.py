@@ -1291,7 +1291,8 @@ def main():
                 .rename(columns={'index': 'Project'})
             )
 
-
+            x_col = 'Pending Count'
+            y_col = 'Project'
     
             fig_pending = px.bar(
                 pending_count,
