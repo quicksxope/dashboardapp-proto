@@ -1508,7 +1508,7 @@ def main():
     
             if selected_project != "all":
                 filtered_df = original_df[
-                    original_df['KONTRAK_DASHBOARD'] == selected_project
+                    original_df['KONTRAK_CODE'] == selected_project
                 ].copy()
             else:
                 filtered_df = original_df.copy()
