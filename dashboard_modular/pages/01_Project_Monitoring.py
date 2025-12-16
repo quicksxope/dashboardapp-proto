@@ -597,7 +597,7 @@ def main():
             [colA, colB]
         ):
             proj_df = original_df[
-                original_df['KONTRAK_DASHBOARD'] == project
+                original_df['KONTRAK_CODE'] == project
             ]
 
         
@@ -703,7 +703,6 @@ def main():
         timeline_columns = [
                 'KONTRAK_CODE',
                 'KONTRAK_DISPLAY',
-                'KONTRAK_DASHBOARD',   # ⬅️ INI KUNCI NYA
                 'JENIS PEKERJAAN',
                 'START',
                 'PLAN END',
