@@ -1290,7 +1290,8 @@ def main():
                 .reindex(['PROJECT 1 A', 'PROJECT 1 B'], fill_value=0)
                 .reset_index()
             )
-            pending_count['Project Display'] = pending_count['Project'].map(PROJECT_MAP)
+            pending_count['Project Display'] = pending_count['Project Code'].map(PROJECT_MAP)
+
 
             
 
@@ -1305,6 +1306,7 @@ def main():
                 color='Pending Count',
                 color_continuous_scale='Oranges'
             )
+
 
     
             fig_pending.update_traces(
