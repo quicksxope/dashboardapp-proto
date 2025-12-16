@@ -1464,125 +1464,119 @@ def main():
 
 
         # --- Project Zone Map ---
-    # --- Project Zone Map ---
+        # --- Project Zone Map ---
+        # --- Project Zone Map ---
     with section_card("🗺️ Zone-Based Project Progress Map"):
         try:
             import map_zones
             import numpy as np
+            import streamlit.components.v1 as components
+            import re
     
             # ================================
-            # 1️⃣ Init session state (CODE, bukan label)
+            # 🔹 PROJECT DISPLAY MAPPING (BARU)
+            # ================================
+            PROJECT_LABEL_MAP = {
+                "PROJECT 1 A": "KSO SPLIT LDS",
+                "PROJECT 1 B": "KSO SPLIT MAA",
+            }
+    
+            def get_project_label(code):
+                return PROJECT_LABEL_MAP.get(code, code)
+    
+            # ================================
+            # Session state
             # ================================
             if 'selected_project' not in st.session_state:
-                st.session_state.selected_project = 'all'
+                st.session_state.selected_project = 'All Projects'
+    
+            project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
     
             # ================================
-            # 2️⃣ Project options (CODE, DISPLAY)
-            # ================================
-            project_options = [
-                ("all", "All Projects"),
-                ("PROJECT 1 A", PROJECT_MAP["PROJECT 1 A"]),  # KSO SPLIT LDS
-                ("PROJECT 1 B", PROJECT_MAP["PROJECT 1 B"]),  # KSO SPLIT MAA
-            ]
-    
-            # ================================
-            # 3️⃣ Render buttons (DISPLAY only)
+            # Render Buttons (LABEL DIGANTI)
             # ================================
             cols = st.columns(len(project_options))
-            for i, (code, label) in enumerate(project_options):
+            for i, proj in enumerate(project_options):
+                label = "All Projects" if proj == "All Projects" else get_project_label(proj)
                 with cols[i]:
-                    active = st.session_state.selected_project == code
-                    if st.button(
-                        f"{'✓ ' if active else ''}{label}",
-                        key=f"btn_zone_{code.replace(' ', '_')}",
-                        type="primary" if active else "secondary",
-                        use_container_width=True
-                    ):
-                        st.session_state.selected_project = code
-                        st.rerun()
+                    if st.button(label, key=f"btn_{proj.replace(' ', '_')}"):
+                        st.session_state.selected_project = proj
     
             # ================================
-            # 4️⃣ Filter data (PAKAI CODE)
+            # Filter Data (TETAP ASLI)
             # ================================
             selected_project = st.session_state.selected_project
-    
-            if selected_project != "all":
-                filtered_df = original_df[
-                    original_df['KONTRAK_CODE'] == selected_project
-                ].copy()
-            else:
-                filtered_df = original_df.copy()
+            if selected_project != 'All Projects':
+                original_df = original_df[
+                    original_df['KONTRAK_DASHBOARD'] == selected_project
+                ]
     
             # ================================
-            # 5️⃣ Header title (DISPLAY)
+            # Title (LABEL DIGANTI)
             # ================================
-            def get_project_display(code):
-                if code == "all":
-                    return "All Projects"
-                return PROJECT_MAP.get(code, code)
+            title_label = (
+                "All Projects"
+                if selected_project == "All Projects"
+                else get_project_label(selected_project)
+            )
     
             st.markdown(
-                f"<h4>Project Site Map – {get_project_display(selected_project)}</h4>",
+                f"<h4>Project Site Map – {title_label}</h4>",
                 unsafe_allow_html=True
             )
     
-
-                        
-
-
             # ================================
-            # VALIDASI KOLOM
+            # Zone progress (TIDAK DIUBAH)
             # ================================
-            if 'AREA PEKERJAAN' not in filtered_df.columns and 'JENIS PEKERJAAN' in filtered_df.columns:
+            if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
                 st.info("No 'AREA PEKERJAAN' column found. Using task descriptions to map work areas.")
-            
-            # ================================
-            # ZONE PROGRESS (PAKAI filtered_df)
-            # ================================
-            progress_by_zone = map_zones.extract_zone_progress(filtered_df)
-            
+    
+            progress_by_zone = map_zones.extract_zone_progress(original_df)
+    
             map_col, legend_col = st.columns([2, 1])
-            
+    
             with map_col:
                 zone_data = []
-
-                for zone, data in progress_by_zone.items():
-                    progress = data.get("progress", 0)
-                
+                for zone, progress in progress_by_zone.items():
                     zone_data.append({
                         'Zone': zone,
                         'Progress': progress,
                         'Status': 'High' if progress >= 50 else ('Medium' if progress >= 30 else 'Low'),
                         'Display': f"{zone}: {progress:.1f}%"
                     })
-
+    
                 zone_df = pd.DataFrame(zone_data)
-            
+    
+                color_scale = {
+                    'Low': '#ef4444',
+                    'Medium': '#facc15',
+                    'High': '#10b981',
+                }
+    
                 fig = px.bar(
                     zone_df,
                     x='Zone',
                     y='Progress',
                     color='Status',
-                    color_discrete_map={
-                        'Low': '#ef4444',
-                        'Medium': '#facc15',
-                        'High': '#10b981'
-                    },
+                    color_discrete_map=color_scale,
                     text='Display',
                     labels={'Progress': 'Completion %', 'Zone': 'Project Zone'},
                     height=400
                 )
-            
+    
                 fig.update_layout(
                     title="Project Progress by Zone",
+                    xaxis_title="",
+                    yaxis_title="Completion %",
                     yaxis=dict(range=[0, 100]),
+                    legend_title="Progress Status",
+                    plot_bgcolor='rgba(0,0,0,0.05)',
                     margin=dict(l=40, r=40, t=60, b=40)
                 )
-            
+    
                 st.plotly_chart(fig, use_container_width=True)
                 st.caption("Simplified zone progress visualization")
-
-
+    
             with legend_col:
                 st.markdown("<h4>Progress Legend</h4>", unsafe_allow_html=True)
                 st.markdown("""
@@ -1593,6 +1587,10 @@ def main():
                 🟢 Green = 50–100% Complete
                 </small>
                 """, unsafe_allow_html=True)
+    
+        except Exception as e:
+            st.error(f"Could not display zone map: {e}")
+
 
             st.markdown("<h4>Progress by Sub-Area Pekerjaan</h4>", unsafe_allow_html=True)
 
