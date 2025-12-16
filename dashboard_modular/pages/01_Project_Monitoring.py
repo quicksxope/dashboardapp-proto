@@ -1506,16 +1506,13 @@ def main():
             with map_col:
                 st.markdown("<h4>Project Site Map</h4>", unsafe_allow_html=True)
                 zone_data = []
-                for zone, data in progress_by_zone.items():
-                    progress = data["progress"] if isinstance(data, dict) else data
-                
+                for zone, progress in progress_by_zone.items():
                     zone_data.append({
                         'Zone': zone,
                         'Progress': progress,
                         'Status': 'High' if progress >= 50 else ('Medium' if progress >= 30 else 'Low'),
                         'Display': f"{zone}: {progress:.1f}%"
                     })
-
                 zone_df = pd.DataFrame(zone_data)
                 color_scale = {
                     'Low': '#ef4444',    # Red-500
