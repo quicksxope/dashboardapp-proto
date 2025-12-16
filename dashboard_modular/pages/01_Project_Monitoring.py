@@ -1485,12 +1485,19 @@ def main():
             cols = st.columns(len(project_options))
             for i, proj in enumerate(project_options):
                 with cols[i]:
-                    if st.button(proj, key=f"btn_{proj.replace(' ', '_')}"):
-                        st.session_state.selected_project = proj
+                    cols = st.columns(len(project_options))
+
+                    for i, (code, label) in enumerate(project_options):
+                        with cols[i]:
+                            if st.button(label, key=f"btn_{code.replace(' ', '_')}"):
+                                st.session_state.selected_project = code
+
             
             # --- Filter Data ---
             selected_project = st.session_state.selected_project
-            if selected_project != 'All Projects':
+            if 'selected_project' not in st.session_state:
+                st.session_state.selected_project = 'all'
+
                 original_df = original_df[
                     original_df['KONTRAK_CODE'] == selected_project
                 ]
