@@ -809,7 +809,7 @@ def main():
                 task_dict[row['TASK_ID']] = row
 
             st.write(
-                timeline_df[['KONTRAK_RAW', 'KONTRAK_DISPLAY', 'Task']].head()
+                timeline_df[['KONTRAK_CODE', 'KONTRAK_DISPLAY', 'Task']].head()
             )
 
 
