@@ -123,7 +123,7 @@ def load_data(file):
     df['START'] = pd.to_datetime(df['START'], errors='coerce')
 
     # 🔥 SIMPAN KONTRAK ASLI (WAJIB, SEKALI SAJA)
-    df['KONTRAK_CODE'] = df['KONTRAK']
+   
 
     
     # Clean text columns
@@ -132,6 +132,7 @@ def load_data(file):
             df[col] = df[col].apply(clean_text)
     # === Dashboard Project Name (AFTER CLEANING) ===
     df['KONTRAK_DISPLAY'] = df['KONTRAK'].map(PROJECT_MAP).fillna(df['KONTRAK'])
+    df['KONTRAK_CODE'] = df['KONTRAK']
 
     
     # Format percentage completion
