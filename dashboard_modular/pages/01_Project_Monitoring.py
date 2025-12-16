@@ -268,34 +268,29 @@ def calculate_priority_score(row):
         
 @st.cache_data
 def create_enhanced_tooltip(row):
-    """Create an enhanced tooltip with all available task information"""
-    tooltip = f"<b>{row['JENIS PEKERJAAN']}</b><br>Project: {row['KONTRAK']}<br>Status: {row['STATUS']}"
-    
-    # Add area and sub-area if available
-    if 'AREA PEKERJAAN' in row and not pd.isna(row['AREA PEKERJAAN']):
+    project_name = row.get('KONTRAK_DISPLAY', row.get('KONTRAK_CODE', ''))
+
+    tooltip = (
+        f"<b>{row['JENIS PEKERJAAN']}</b>"
+        f"<br>Project: {project_name}"
+        f"<br>Status: {row['STATUS']}"
+    )
+
+    if 'AREA PEKERJAAN' in row and pd.notna(row['AREA PEKERJAAN']):
         tooltip += f"<br>Area: {row['AREA PEKERJAAN']}"
-    if 'SUB AREA PEKERJAAN' in row and not pd.isna(row['SUB AREA PEKERJAAN']):
+    if 'SUB AREA PEKERJAAN' in row and pd.notna(row['SUB AREA PEKERJAAN']):
         tooltip += f"<br>Sub Area: {row['SUB AREA PEKERJAAN']}"
-    
-    # Add progress if available
-    if '% COMPLETE' in row and not pd.isna(row['% COMPLETE']):
+    if '% COMPLETE' in row and pd.notna(row['% COMPLETE']):
         tooltip += f"<br>Progress: {row['% COMPLETE']:.1f}%"
-    
-    # Add dates
+
     if 'START' in row and 'PLAN END' in row:
-        start_str = row['START'].strftime('%Y-%m-%d')
-        end_str = row['PLAN END'].strftime('%Y-%m-%d')
-        tooltip += f"<br>Duration: {start_str} to {end_str}"
-    
-    # Add resource if available
-    if 'RESOURCE' in row and not pd.isna(row['RESOURCE']):
-        tooltip += f"<br>Resource: {row['RESOURCE']}"
-    
-    # Add milestone indicator
+        tooltip += f"<br>Duration: {row['START'].date()} → {row['PLAN END'].date()}"
+
     if 'IS_MILESTONE' in row and row['IS_MILESTONE']:
         tooltip += "<br><b>MILESTONE</b>"
-    
+
     return tooltip
+
 
 
 # Critical path functions removed - not being used anymore
