@@ -794,7 +794,7 @@ def main():
             )
 
             # Sort by level and task order for hierarchical display
-            timeline_df = timeline_df.sort_values(['KONTRAK_DASHBOARD', 'TASK_LEVEL', 'START'])
+            timeline_df = timeline_df.sort_values(['KONTRAK_CODE', 'TASK_LEVEL', 'START'])
         else:
             # Simple task format without hierarchy
             timeline_df['Task'] = timeline_df.apply(
@@ -814,7 +814,7 @@ def main():
                 task_dict[row['TASK_ID']] = row
 
             st.write(
-                timeline_df[['KONTRAK_RAW', 'KONTRAK_DASHBOARD', 'Task']].head()
+                timeline_df[['KONTRAK_RAW', 'KONTRAK_DISPLAY', 'Task']].head()
             )
 
 
@@ -1259,9 +1259,9 @@ def main():
         active_filter = st.session_state.get("active_project_filter", "all")
     
         if active_filter == "p1a":
-            filtered_df = df[df['KONTRAK_DASHBOARD'] == PROJECT_MAP['PROJECT 1 A']]
+            filtered_df = df[df['KONTRAK_CODE'] == PROJECT_MAP['PROJECT 1 A']]
         elif active_filter == "p1b":
-            filtered_df = df[df['KONTRAK_DASHBOARD'] == PROJECT_MAP['PROJECT 1 B']]
+            filtered_df = df[df['KONTRAK_CODE'] == PROJECT_MAP['PROJECT 1 B']]
         else:
             filtered_df = df.copy()
     
@@ -1293,7 +1293,7 @@ def main():
     
             # Hitung pending per project
             pending_count = (
-                pending_df['KONTRAK_DASHBOARD']
+                pending_df['KONTRAK_CODE']
                 .value_counts()
                 .reindex(['PROJECT 1 A', 'PROJECT 1 B'], fill_value=0)
                 .reset_index()
@@ -1476,7 +1476,7 @@ def main():
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
                 original_df = original_df[
-                    original_df['KONTRAK_DASHBOARD'] == selected_project
+                    original_df['KONTRAK_CODE'] == selected_project
                 ]
 
 
