@@ -1473,7 +1473,12 @@ def main():
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
             
-            project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
+            project_options = [
+                ("all", "All Projects"),
+                ("PROJECT 1 A", PROJECT_MAP["PROJECT 1 A"]),  # KSO SPLIT LDS
+                ("PROJECT 1 B", PROJECT_MAP["PROJECT 1 B"]),  # KSO SPLIT MAA
+            ]
+
 
             
             # --- Render Buttons ---
