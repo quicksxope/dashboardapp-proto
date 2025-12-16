@@ -1278,20 +1278,26 @@ def main():
     
         with c2:
             pending_df = filtered_df[filtered_df['STATUS'].isin(['TUNDA', 'BELUM MULAI'])]
-    
-            # Semua project yang harus ditampilkan
-            all_projects = ['PROJECT 1 A', 'PROJECT 1 B']
 
-    
-            # Hitung pending per project
+            # Hitung pending per project (AMAN)
             pending_count = (
-                pending_df['KONTRAK_CODE']
-                .value_counts()
-                .reindex(['PROJECT 1 A', 'PROJECT 1 B'], fill_value=0)
-                .reset_index()
+                pending_df
+                .groupby('KONTRAK_CODE')
+                .size()
+                .reset_index(name='Pending Count')
             )
-            pending_count['Project Display'] = pending_count['Project Code'].map(PROJECT_MAP)
-
+            
+            # Pastikan semua project muncul
+            pending_count = (
+                pd.DataFrame({'KONTRAK_CODE': ['PROJECT 1 A', 'PROJECT 1 B']})
+                .merge(pending_count, on='KONTRAK_CODE', how='left')
+                .fillna({'Pending Count': 0})
+            )
+            
+            # Mapping ke nama dashboard (KSO)
+            pending_count['Project Display'] = pending_count['KONTRAK_CODE'].map(PROJECT_MAP)
+            
+            
 
             
 
@@ -1306,6 +1312,7 @@ def main():
                 color='Pending Count',
                 color_continuous_scale='Oranges'
             )
+
 
 
     
