@@ -1299,7 +1299,15 @@ def main():
             
             
 
-            
+            active_filter = st.session_state.get("active_project_filter", "all")
+
+            if active_filter == "p1a":
+                title_project = PROJECT_MAP['PROJECT 1 A']
+            elif active_filter == "p1b":
+                title_project = PROJECT_MAP['PROJECT 1 B']
+            else:
+                title_project = "ALL PROJECTS"
+
 
     
             fig_pending = px.bar(
