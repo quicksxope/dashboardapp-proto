@@ -122,7 +122,7 @@ def load_data(file):
     df['START'] = pd.to_datetime(df['START'], errors='coerce')
 
     # 🔥 SIMPAN KONTRAK ASLI (WAJIB, SEKALI SAJA)
-    df['KONTRAK_RAW'] = df['KONTRAK'].astype(str)
+    df['KONTRAK_CODE'] = df['KONTRAK']
 
     
     # Clean text columns
@@ -130,11 +130,7 @@ def load_data(file):
         if col in df.columns:
             df[col] = df[col].apply(clean_text)
     # === Dashboard Project Name (AFTER CLEANING) ===
-    df['KONTRAK_DASHBOARD'] = (
-        df['KONTRAK_RAW']
-        .map(REVERSE_PROJECT_MAP)
-        .fillna(df['KONTRAK_RAW'])
-    )
+    df['KONTRAK_DISPLAY'] = df['KONTRAK'].map(PROJECT_MAP).fillna(df['KONTRAK'])
 
     
     # Format percentage completion
@@ -546,7 +542,7 @@ def main():
     df = original_df.copy()
 
     # Example continuation: safe to access original_df now
-    kontrak_opts = ['All'] + sorted(original_df['KONTRAK_DASHBOARD'].dropna().unique())
+    kontrak_opts = ['All'] + sorted(original_df['KONTRAK_CODE'].dropna().unique())
     selected_kontrak = st.sidebar.selectbox("Filter by KONTRAK", kontrak_opts)
 
     filter_columns = ['JENIS PEKERJAAN', 'AREA PEKERJAAN', 'SUB AREA PEKERJAAN']
@@ -555,7 +551,7 @@ def main():
     selected_filter_val = st.sidebar.selectbox("Select Value", filter_values)
 
     if selected_kontrak != 'All':
-        df = df[df['KONTRAK_DASHBOARD'] == selected_kontrak]
+        df = df[df['KONTRAK_CODE'] == selected_kontrak]
 
     if selected_filter_val != 'All':
         df = df[df[selected_filter_col] == selected_filter_val]
@@ -705,8 +701,8 @@ def main():
     if {'START', 'PLAN END'}.issubset(original_df.columns):
         # Create timeline dataframe from original data with additional columns for enhanced features
         timeline_columns = [
-                'KONTRAK_RAW',   
-                'KONTRAK',
+                'KONTRAK_CODE',
+                'KONTRAK_DISPLAY',
                 'KONTRAK_DASHBOARD',   # ⬅️ INI KUNCI NYA
                 'JENIS PEKERJAAN',
                 'START',
@@ -733,13 +729,13 @@ def main():
         # Filter based on session state active filter
         if st.session_state.active_project_filter == 'p1a':
             timeline_df = timeline_df[
-                timeline_df['KONTRAK_DASHBOARD'] == 'PROJECT 1 A'
+                timeline_df['KONTRAK_CODE'] == 'PROJECT 1 A'
             ]
 
             st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>KSO SPLIT LDS<</strong></div>", unsafe_allow_html=True)
         elif st.session_state.active_project_filter == 'p1b':
             timeline_df = timeline_df[
-                timeline_df['KONTRAK_DASHBOARD'] == 'PROJECT 1 B'
+                timeline_df['KONTRAK_CODE'] == 'PROJECT 1 B'
             ]
 
             st.markdown("<div class='high-contrast-info'>Showing timeline for <strong>KSO SPLIT MAA<</strong></div>", unsafe_allow_html=True)
@@ -794,7 +790,7 @@ def main():
             # Create indented task names for hierarchy visualization
             timeline_df['Task'] = timeline_df.apply(
                 lambda row: ("  " * (max(0, row['TASK_LEVEL'] - 1)))
-                + f"{row['KONTRAK_RAW']} - {row['JENIS PEKERJAAN']}",
+                + f"{row['KONTRAK_DISPLAY']} - {row['JENIS PEKERJAAN']}",
                 axis=1
             )
 
@@ -803,7 +799,7 @@ def main():
         else:
             # Simple task format without hierarchy
             timeline_df['Task'] = timeline_df.apply(
-                lambda row: f"{row['KONTRAK_RAW']} - {row['JENIS PEKERJAAN']}",
+                lambda row: f"{row['KONTRAK_DISPLAY']} - {row['JENIS PEKERJAAN']}",
                 axis=1
             )
 
@@ -1211,7 +1207,7 @@ def main():
                 
                 # Create an expander for each task with details
                 for _, row in timeline_df.iterrows():
-                    with st.expander(f"{row['KONTRAK_DASHBOARD']} - {row['JENIS PEKERJAAN']}"):
+                    with st.expander(f"{row['KONTRAK_DISPLAY']} - {row['JENIS PEKERJAAN']}"):
                         col1, col2 = st.columns(2)
                         
                         with col1:
