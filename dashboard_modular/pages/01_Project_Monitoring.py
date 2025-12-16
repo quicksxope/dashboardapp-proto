@@ -1508,7 +1508,7 @@ def main():
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
                 original_df = original_df[
-                    original_df['KONTRAK_DASHBOARD'] == selected_project
+                    original_df['KONTRAK_CODE'] == selected_project
                 ]
     
             # ================================
