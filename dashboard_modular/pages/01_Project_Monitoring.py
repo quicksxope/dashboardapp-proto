@@ -1545,14 +1545,17 @@ def main():
             
             with map_col:
                 zone_data = []
-                for zone, progress in progress_by_zone.items():
+
+                for zone, data in progress_by_zone.items():
+                    progress = data.get("progress", 0)
+                
                     zone_data.append({
                         'Zone': zone,
                         'Progress': progress,
                         'Status': 'High' if progress >= 50 else ('Medium' if progress >= 30 else 'Low'),
                         'Display': f"{zone}: {progress:.1f}%"
                     })
-            
+
                 zone_df = pd.DataFrame(zone_data)
             
                 fig = px.bar(
