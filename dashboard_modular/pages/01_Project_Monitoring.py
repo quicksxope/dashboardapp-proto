@@ -1465,16 +1465,17 @@ def main():
 
         # --- Project Zone Map ---
         # --- Project Zone Map ---
+
         # --- Project Zone Map ---
     with section_card("🗺️ Zone-Based Project Progress Map"):
         try:
             import map_zones
             import numpy as np
-            import streamlit.components.v1 as components
             import re
+            import streamlit.components.v1 as components
     
             # ================================
-            # 🔹 PROJECT DISPLAY MAPPING (BARU)
+            # 1️⃣ Project label mapping (UI ONLY)
             # ================================
             PROJECT_LABEL_MAP = {
                 "PROJECT 1 A": "KSO SPLIT LDS",
@@ -1485,7 +1486,7 @@ def main():
                 return PROJECT_LABEL_MAP.get(code, code)
     
             # ================================
-            # Session state
+            # 2️⃣ Session state
             # ================================
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
@@ -1493,7 +1494,7 @@ def main():
             project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
     
             # ================================
-            # Render Buttons (LABEL DIGANTI)
+            # 3️⃣ Render buttons (DISPLAY = KSO)
             # ================================
             cols = st.columns(len(project_options))
             for i, proj in enumerate(project_options):
@@ -1503,7 +1504,7 @@ def main():
                         st.session_state.selected_project = proj
     
             # ================================
-            # Filter Data (TETAP ASLI)
+            # 4️⃣ Filter data (LOGIC = KONTRAK_CODE)
             # ================================
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
@@ -1512,7 +1513,7 @@ def main():
                 ]
     
             # ================================
-            # Title (LABEL DIGANTI)
+            # 5️⃣ Title (DISPLAY = KSO)
             # ================================
             title_label = (
                 "All Projects"
@@ -1526,7 +1527,7 @@ def main():
             )
     
             # ================================
-            # Zone progress (TIDAK DIUBAH)
+            # 6️⃣ Zone progress (TIDAK DIUBAH)
             # ================================
             if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
                 st.info("No 'AREA PEKERJAAN' column found. Using task descriptions to map work areas.")
@@ -1570,6 +1571,7 @@ def main():
                     yaxis_title="Completion %",
                     yaxis=dict(range=[0, 100]),
                     legend_title="Progress Status",
+                    font=dict(size=12),
                     plot_bgcolor='rgba(0,0,0,0.05)',
                     margin=dict(l=40, r=40, t=60, b=40)
                 )
@@ -1590,6 +1592,7 @@ def main():
     
         except Exception as e:
             st.error(f"Could not display zone map: {e}")
+
 
 
             st.markdown("<h4>Progress by Sub-Area Pekerjaan</h4>", unsafe_allow_html=True)
