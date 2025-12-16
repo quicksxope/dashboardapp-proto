@@ -808,10 +808,7 @@ def main():
             for _, row in timeline_df.iterrows():
                 task_dict[row['TASK_ID']] = row
 
-            st.write(
-                timeline_df[['KONTRAK_CODE', 'KONTRAK_DISPLAY', 'Task']].head()
-            )
-
+        
 
             # Create Gantt chart with custom hover info
             fig = px.timeline(
@@ -1293,20 +1290,22 @@ def main():
                 .reindex(['PROJECT 1 A', 'PROJECT 1 B'], fill_value=0)
                 .reset_index()
             )
-            pending_count.columns = ['Project', 'Pending Count']
+            pending_count['Project Display'] = pending_count['Project'].map(PROJECT_MAP)
+
             
 
     
             fig_pending = px.bar(
                 pending_count,
                 x='Pending Count',
-                y='Project',
+                y='Project Display',
                 orientation='h',
                 text='Pending Count',
-                title=f"Projects with Pending Tasks ({active_filter.upper() if active_filter != 'all' else 'ALL'})",
+                title=f"Projects with Pending Tasks ({title_project})",
                 color='Pending Count',
                 color_continuous_scale='Oranges'
             )
+
     
             fig_pending.update_traces(
                 texttemplate='%{text}', 
