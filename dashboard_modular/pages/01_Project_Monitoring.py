@@ -1928,6 +1928,7 @@ window.addEventListener("message", function(event) {
 </body>
 </html>
 '''
+components.html(html_code, height=1000, scrolling=True)
 
 
 
