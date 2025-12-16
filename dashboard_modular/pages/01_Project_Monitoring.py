@@ -1530,16 +1530,20 @@ def main():
                         
 
 
-            if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
+            # ================================
+            # VALIDASI KOLOM
+            # ================================
+            if 'AREA PEKERJAAN' not in filtered_df.columns and 'JENIS PEKERJAAN' in filtered_df.columns:
                 st.info("No 'AREA PEKERJAAN' column found. Using task descriptions to map work areas.")
-
-            progress_by_zone = map_zones.extract_zone_progress(original_df)
-            colored_map_html = map_zones.generate_colored_map(progress_by_zone)
-
+            
+            # ================================
+            # ZONE PROGRESS (PAKAI filtered_df)
+            # ================================
+            progress_by_zone = map_zones.extract_zone_progress(filtered_df)
+            
             map_col, legend_col = st.columns([2, 1])
-
+            
             with map_col:
-                st.markdown("<h4>Project Site Map</h4>", unsafe_allow_html=True)
                 zone_data = []
                 for zone, progress in progress_by_zone.items():
                     zone_data.append({
@@ -1548,34 +1552,33 @@ def main():
                         'Status': 'High' if progress >= 50 else ('Medium' if progress >= 30 else 'Low'),
                         'Display': f"{zone}: {progress:.1f}%"
                     })
+            
                 zone_df = pd.DataFrame(zone_data)
-                color_scale = {
-                    'Low': '#ef4444',    # Red-500
-                    'Medium': '#facc15', # Yellow-400
-                    'High': '#10b981',   # Emerald-500
-                }
+            
                 fig = px.bar(
                     zone_df,
                     x='Zone',
                     y='Progress',
                     color='Status',
-                    color_discrete_map=color_scale,
+                    color_discrete_map={
+                        'Low': '#ef4444',
+                        'Medium': '#facc15',
+                        'High': '#10b981'
+                    },
                     text='Display',
                     labels={'Progress': 'Completion %', 'Zone': 'Project Zone'},
                     height=400
                 )
+            
                 fig.update_layout(
                     title="Project Progress by Zone",
-                    xaxis_title="",
-                    yaxis_title="Completion %",
                     yaxis=dict(range=[0, 100]),
-                    legend_title="Progress Status",
-                    font=dict(size=12),
-                    plot_bgcolor='rgba(0,0,0,0.05)',
                     margin=dict(l=40, r=40, t=60, b=40)
                 )
+            
                 st.plotly_chart(fig, use_container_width=True)
                 st.caption("Simplified zone progress visualization")
+
 
             with legend_col:
                 st.markdown("<h4>Progress Legend</h4>", unsafe_allow_html=True)
