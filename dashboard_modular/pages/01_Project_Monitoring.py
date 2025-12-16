@@ -26,6 +26,7 @@ from shared import get_file
 PROJECT_MAP = {
     "PROJECT 1 A": "KSO SPLIT LDS",
     "PROJECT 1 B": "KSO SPLIT MAA",
+    "PROJECT PARAHITA : "PROJECT PARAHITA"
 }
 
 REVERSE_PROJECT_MAP = {v: k for k, v in PROJECT_MAP.items()}
@@ -586,10 +587,10 @@ def main():
 
     # --- Weighted Progress ---
     with section_card("🎯 Weighted Progress by Bobot × % Complete (All Projects)"):
-        colA, colB, colC, colD = st.columns(4)
+        colA, colB, colC = st.columns(3)
         for project, col in zip(
-            ['PROJECT 1 A', 'PROJECT 1 B'],
-            [colA, colB]
+            ['PROJECT 1 A', 'PROJECT 1 B', 'PROJECT PARAHITA],
+            [colA, colB, colC]
         ):
             proj_df = original_df[
                 original_df['KONTRAK_CODE'] == project
