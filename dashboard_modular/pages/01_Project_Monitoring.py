@@ -1464,44 +1464,68 @@ def main():
 
 
         # --- Project Zone Map ---
+    # --- Project Zone Map ---
     with section_card("🗺️ Zone-Based Project Progress Map"):
         try:
             import map_zones
             import numpy as np
-
-
+    
+            # ================================
+            # 1️⃣ Init session state (CODE, bukan label)
+            # ================================
             if 'selected_project' not in st.session_state:
-                st.session_state.selected_project = 'All Projects'
-            
+                st.session_state.selected_project = 'all'
+    
+            # ================================
+            # 2️⃣ Project options (CODE, DISPLAY)
+            # ================================
             project_options = [
                 ("all", "All Projects"),
                 ("PROJECT 1 A", PROJECT_MAP["PROJECT 1 A"]),  # KSO SPLIT LDS
                 ("PROJECT 1 B", PROJECT_MAP["PROJECT 1 B"]),  # KSO SPLIT MAA
             ]
-
-
-            
-            # --- Render Buttons ---
+    
+            # ================================
+            # 3️⃣ Render buttons (DISPLAY only)
+            # ================================
             cols = st.columns(len(project_options))
-            for i, proj in enumerate(project_options):
+            for i, (code, label) in enumerate(project_options):
                 with cols[i]:
-                    cols = st.columns(len(project_options))
-
-                    for i, (code, label) in enumerate(project_options):
-                        with cols[i]:
-                            if st.button(label, key=f"btn_{code.replace(' ', '_')}"):
-                                st.session_state.selected_project = code
-
-            
-            # --- Filter Data ---
+                    active = st.session_state.selected_project == code
+                    if st.button(
+                        f"{'✓ ' if active else ''}{label}",
+                        key=f"btn_zone_{code.replace(' ', '_')}",
+                        type="primary" if active else "secondary",
+                        use_container_width=True
+                    ):
+                        st.session_state.selected_project = code
+                        st.rerun()
+    
+            # ================================
+            # 4️⃣ Filter data (PAKAI CODE)
+            # ================================
             selected_project = st.session_state.selected_project
-            if 'selected_project' not in st.session_state:
-                st.session_state.selected_project = 'all'
-
-                original_df = original_df[
-                    original_df['KONTRAK_CODE'] == selected_project
-                ]
-
+    
+            if selected_project != "all":
+                filtered_df = original_df[
+                    original_df['KONTRAK_DASHBOARD'] == selected_project
+                ].copy()
+            else:
+                filtered_df = original_df.copy()
+    
+            # ================================
+            # 5️⃣ Header title (DISPLAY)
+            # ================================
+            def get_project_display(code):
+                if code == "all":
+                    return "All Projects"
+                return PROJECT_MAP.get(code, code)
+    
+            st.markdown(
+                f"<h4>Project Site Map – {get_project_display(selected_project)}</h4>",
+                unsafe_allow_html=True
+            )
+    
 
                         
 
