@@ -1474,7 +1474,7 @@ def main():
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
             
-            project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
+            project_options = ['All Projects', 'KSO SPLIT LDS', 'KSO SPLIT MAA']
 
             
             # --- Render Buttons ---
@@ -1488,7 +1488,7 @@ def main():
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
                 original_df = original_df[
-                    original_df['KONTRAK_DASHBOARD'] == selected_project
+                    original_df['KONTRAK_CODE'] == selected_project
                 ]
 
 
