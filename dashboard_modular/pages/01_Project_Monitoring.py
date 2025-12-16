@@ -1205,7 +1205,7 @@ def main():
                         col1, col2 = st.columns(2)
                         
                         with col1:
-                            st.markdown(f"**Project:** {row['KONTRAK']}")
+                            st.markdown(f"**Project:** {row['KONTRAK_DISPLAY']}")
                             st.markdown(f"**Task:** {row['JENIS PEKERJAAN']}")
                             if 'AREA PEKERJAAN' in row and not pd.isna(row['AREA PEKERJAAN']):
                                 st.markdown(f"**Area Pekerjaan:** {row['AREA PEKERJAAN']}")
