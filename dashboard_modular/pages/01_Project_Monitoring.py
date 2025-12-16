@@ -1474,15 +1474,21 @@ def main():
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
             
-            project_options = ['All Projects', 'KSO SPLIT LDS', 'KSO SPLIT MAA']
+            project_options = [
+                ("All Projects", "All Projects"),
+                ("PROJECT 1 A", "KSO SPLIT LDS"),
+                ("PROJECT 1 B", "KSO SPLIT MAA"),
+            ]
+
 
             
             # --- Render Buttons ---
             cols = st.columns(len(project_options))
-            for i, proj in enumerate(project_options):
+            for i, (code, label) in enumerate(project_options):
                 with cols[i]:
-                    if st.button(proj, key=f"btn_{proj.replace(' ', '_')}"):
-                        st.session_state.selected_project = proj
+                    if st.button(label, key=f"btn_{code.replace(' ', '_')}"):
+                        st.session_state.selected_project = code
+
             
             # --- Filter Data ---
             selected_project = st.session_state.selected_project
