@@ -26,7 +26,7 @@ from shared import get_file
 PROJECT_MAP = {
     "PROJECT 1 A": "KSO SPLIT LDS",
     "PROJECT 1 B": "KSO SPLIT MAA",
-    "PROJECT PARAHITA : "PROJECT PARAHITA"
+    "PROJECT PARAHITA" : "PROJECT PARAHITA"
 }
 
 REVERSE_PROJECT_MAP = {v: k for k, v in PROJECT_MAP.items()}
@@ -586,31 +586,35 @@ def main():
     st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
 
     # --- Weighted Progress ---
+    # --- Weighted Progress ---
     with section_card("🎯 Weighted Progress by Bobot × % Complete (All Projects)"):
-        colA, colB, colC = st.columns(3)
-        for project, col in zip(
-            ['PROJECT 1 A', 'PROJECT 1 B', 'PROJECT PARAHITA],
-            [colA, colB, colC]
-        ):
+    
+        col1, col2, col3 = st.columns(3)
+    
+        projects = [
+            ("PROJECT 1 A", "KSO SPLIT LDS", col1),
+            ("PROJECT 1 B", "KSO SPLIT MAA", col2),
+            ("PROJECT PARAHITA", "PROJECT PARAHITA", col3),
+        ]
+    
+        for project_code, display_name, col in projects:
             proj_df = original_df[
-                original_df['KONTRAK_CODE'] == project
+                original_df['KONTRAK_CODE'] == project_code
             ]
-
-        
-            if not proj_df.empty:
-                weighted = (proj_df['BOBOT'] * proj_df['% COMPLETE']).sum()
-                total_bobot = proj_df['BOBOT'].sum()
-                progress = (weighted / total_bobot) if total_bobot else 0
-                with col:
-                    st.markdown(f"**📌 {PROJECT_MAP.get(project, project)}**")
-
+    
+            with col:
+                st.markdown(f"**📌 {display_name}**")
+    
+                if not proj_df.empty:
+                    weighted = (proj_df['BOBOT'] * proj_df['% COMPLETE']).sum()
+                    total_bobot = proj_df['BOBOT'].sum()
+                    progress = (weighted / total_bobot) if total_bobot else 0
+    
                     st.progress(int(progress))
                     st.caption(f"Progress: **{progress:.2f}%**")
-            else:
-                with col:
-                    st.markdown(f"**📌 {PROJECT_MAP.get(project, project)}**")
-
+                else:
                     st.info("No data available.")
+
 
 
    # --- Timeline & Task Table ---
