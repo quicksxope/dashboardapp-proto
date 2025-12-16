@@ -1465,78 +1465,46 @@ def main():
 
         # --- Project Zone Map ---
         # --- Project Zone Map ---
-
-        # --- Project Zone Map ---
     with section_card("🗺️ Zone-Based Project Progress Map"):
         try:
             import map_zones
             import numpy as np
-            import re
-            import streamlit.components.v1 as components
-    
-            # ================================
-            # 1️⃣ Project label mapping (UI ONLY)
-            # ================================
-            PROJECT_LABEL_MAP = {
-                "PROJECT 1 A": "KSO SPLIT LDS",
-                "PROJECT 1 B": "KSO SPLIT MAA",
-            }
-    
-            def get_project_label(code):
-                return PROJECT_LABEL_MAP.get(code, code)
-    
-            # ================================
-            # 2️⃣ Session state
-            # ================================
+
+
             if 'selected_project' not in st.session_state:
                 st.session_state.selected_project = 'All Projects'
-    
+            
             project_options = ['All Projects', 'PROJECT 1 A', 'PROJECT 1 B']
-    
-            # ================================
-            # 3️⃣ Render buttons (DISPLAY = KSO)
-            # ================================
+
+            
+            # --- Render Buttons ---
             cols = st.columns(len(project_options))
             for i, proj in enumerate(project_options):
-                label = "All Projects" if proj == "All Projects" else get_project_label(proj)
                 with cols[i]:
-                    if st.button(label, key=f"btn_{proj.replace(' ', '_')}"):
+                    if st.button(proj, key=f"btn_{proj.replace(' ', '_')}"):
                         st.session_state.selected_project = proj
-    
-            # ================================
-            # 4️⃣ Filter data (LOGIC = KONTRAK_CODE)
-            # ================================
+            
+            # --- Filter Data ---
             selected_project = st.session_state.selected_project
             if selected_project != 'All Projects':
                 original_df = original_df[
-                    original_df['KONTRAK_CODE'] == selected_project
+                    original_df['KONTRAK_DASHBOARD'] == selected_project
                 ]
-    
-            # ================================
-            # 5️⃣ Title (DISPLAY = KSO)
-            # ================================
-            title_label = (
-                "All Projects"
-                if selected_project == "All Projects"
-                else get_project_label(selected_project)
-            )
-    
-            st.markdown(
-                f"<h4>Project Site Map – {title_label}</h4>",
-                unsafe_allow_html=True
-            )
-    
-            # ================================
-            # 6️⃣ Zone progress (TIDAK DIUBAH)
-            # ================================
+
+
+                        
+
+
             if 'AREA PEKERJAAN' not in original_df.columns and 'JENIS PEKERJAAN' in original_df.columns:
                 st.info("No 'AREA PEKERJAAN' column found. Using task descriptions to map work areas.")
-    
+
             progress_by_zone = map_zones.extract_zone_progress(original_df)
-    
+            colored_map_html = map_zones.generate_colored_map(progress_by_zone)
+
             map_col, legend_col = st.columns([2, 1])
-    
+
             with map_col:
+                st.markdown("<h4>Project Site Map</h4>", unsafe_allow_html=True)
                 zone_data = []
                 for zone, progress in progress_by_zone.items():
                     zone_data.append({
@@ -1545,15 +1513,12 @@ def main():
                         'Status': 'High' if progress >= 50 else ('Medium' if progress >= 30 else 'Low'),
                         'Display': f"{zone}: {progress:.1f}%"
                     })
-    
                 zone_df = pd.DataFrame(zone_data)
-    
                 color_scale = {
-                    'Low': '#ef4444',
-                    'Medium': '#facc15',
-                    'High': '#10b981',
+                    'Low': '#ef4444',    # Red-500
+                    'Medium': '#facc15', # Yellow-400
+                    'High': '#10b981',   # Emerald-500
                 }
-    
                 fig = px.bar(
                     zone_df,
                     x='Zone',
@@ -1564,7 +1529,6 @@ def main():
                     labels={'Progress': 'Completion %', 'Zone': 'Project Zone'},
                     height=400
                 )
-    
                 fig.update_layout(
                     title="Project Progress by Zone",
                     xaxis_title="",
@@ -1575,10 +1539,9 @@ def main():
                     plot_bgcolor='rgba(0,0,0,0.05)',
                     margin=dict(l=40, r=40, t=60, b=40)
                 )
-    
                 st.plotly_chart(fig, use_container_width=True)
                 st.caption("Simplified zone progress visualization")
-    
+
             with legend_col:
                 st.markdown("<h4>Progress Legend</h4>", unsafe_allow_html=True)
                 st.markdown("""
@@ -1589,11 +1552,6 @@ def main():
                 🟢 Green = 50–100% Complete
                 </small>
                 """, unsafe_allow_html=True)
-    
-        except Exception as e:
-            st.error(f"Could not display zone map: {e}")
-
-
 
             st.markdown("<h4>Progress by Sub-Area Pekerjaan</h4>", unsafe_allow_html=True)
 
@@ -1928,8 +1886,6 @@ window.addEventListener("message", function(event) {
 </body>
 </html>
 '''
-components.html(html_code, height=1000, scrolling=True)
-
 
 
 
